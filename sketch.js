@@ -54,8 +54,7 @@ function setup() {
       offsets: offsets,
       // Random centers for each color patch (fractions of r, stored once)
       blueOffX:  random(-0.55, 0.55), blueOffY:  random(-0.55, 0.55),
-      redOffX:   random(-0.55, 0.55), redOffY:   random(-0.55, 0.55),
-      shineOffX: random(-0.40, 0.40), shineOffY: random(-0.40, 0.40)
+      redOffX:   random(-0.55, 0.55), redOffY:   random(-0.55, 0.55)
     });
   }
 
@@ -178,7 +177,7 @@ function draw() {
   // Drawn in ADD mode clipped to the blob shape, so they scatter and
   // overlap differently in every drop. Vignette pass darkens edges.
   noStroke();
-  fill(0); // forces p5 to build blob path; black is invisible on black bg
+  fill(0, 0, 0, 0); // transparent: forces p5 to build the path, no black base
 
   for (var i = 0; i < pebbles.length; i++) {
     var p = pebbles[i];
@@ -206,25 +205,19 @@ function draw() {
     drawingContext.clip();
     drawingContext.globalCompositeOperation = 'lighter';
 
+    // Boosted values so the ADD overlap zone naturally reads as a bright shine
     var bx = p.x + p.blueOffX * p.r, by = p.y + p.blueOffY * p.r;
-    var bg = drawingContext.createRadialGradient(bx, by, 0, bx, by, p.r);
-    bg.addColorStop(0, 'rgb(0,' + bl + ',255)');
+    var bg = drawingContext.createRadialGradient(bx, by, 0, bx, by, p.r * 1.1);
+    bg.addColorStop(0, 'rgb(40,' + ~~min(255, bl + 40) + ',255)');
     bg.addColorStop(1, 'rgba(0,0,0,0)');
     drawingContext.fillStyle = bg;
     drawingContext.fillRect(p.x - r2, p.y - r2, r4, r4);
 
     var rx = p.x + p.redOffX * p.r, ry = p.y + p.redOffY * p.r;
-    var rg = drawingContext.createRadialGradient(rx, ry, 0, rx, ry, p.r);
-    rg.addColorStop(0, 'rgb(' + cr + ',28,50)');
+    var rg = drawingContext.createRadialGradient(rx, ry, 0, rx, ry, p.r * 1.1);
+    rg.addColorStop(0, 'rgb(' + ~~min(255, cr + 40) + ',40,70)');
     rg.addColorStop(1, 'rgba(0,0,0,0)');
     drawingContext.fillStyle = rg;
-    drawingContext.fillRect(p.x - r2, p.y - r2, r4, r4);
-
-    var sx = p.x + p.shineOffX * p.r, sy = p.y + p.shineOffY * p.r;
-    var sg = drawingContext.createRadialGradient(sx, sy, 0, sx, sy, p.r * 0.65);
-    sg.addColorStop(0, 'rgba(180,205,255,0.60)');
-    sg.addColorStop(1, 'rgba(0,0,0,0)');
-    drawingContext.fillStyle = sg;
     drawingContext.fillRect(p.x - r2, p.y - r2, r4, r4);
 
     // Restore: removes clip and resets composite to source-over
@@ -239,8 +232,8 @@ function draw() {
     drawingContext.fill();
 
     // Thin white stroke to define the blob silhouette
-    drawingContext.strokeStyle = 'rgba(255,255,255,0.8)';
-    drawingContext.lineWidth   = 1;
+    drawingContext.strokeStyle = 'rgba(255,255,255,0.95)';
+    drawingContext.lineWidth   = 0.5;
     drawingContext.stroke();
   }
 
