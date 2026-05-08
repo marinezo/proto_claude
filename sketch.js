@@ -207,18 +207,22 @@ function draw() {
     drawingContext.clip();
     drawingContext.globalCompositeOperation = 'lighter';
 
-    // Color patches near the rim — center stays dark, glow lives at the edge
-    var bx = p.x + p.blueOffX * p.r, by = p.y + p.blueOffY * p.r;
-    var bg = drawingContext.createRadialGradient(bx, by, 0, bx, by, p.r * 0.68);
-    bg.addColorStop(0, 'rgb(20,' + bl + ',255)');
-    bg.addColorStop(1, 'rgba(0,0,0,0)');
+    // Inverted gradients: dark inner core → bright at blob boundary.
+    // Each center is slightly offset so blue dominates one side of the rim,
+    // red the other — the glow comes from the edge inward, not center outward.
+    var bCx = p.x + p.blueOffX * p.r * 0.25;
+    var bCy = p.y + p.blueOffY * p.r * 0.25;
+    var bg = drawingContext.createRadialGradient(bCx, bCy, p.r * 0.38, bCx, bCy, p.r * 1.02);
+    bg.addColorStop(0, 'rgba(0,0,0,0)');
+    bg.addColorStop(1, 'rgb(15,' + bl + ',255)');
     drawingContext.fillStyle = bg;
     drawingContext.fillRect(p.x - r2, p.y - r2, r4, r4);
 
-    var rx = p.x + p.redOffX * p.r, ry = p.y + p.redOffY * p.r;
-    var rg = drawingContext.createRadialGradient(rx, ry, 0, rx, ry, p.r * 0.68);
-    rg.addColorStop(0, 'rgb(' + cr + ',25,55)');
-    rg.addColorStop(1, 'rgba(0,0,0,0)');
+    var rCx = p.x + p.redOffX * p.r * 0.25;
+    var rCy = p.y + p.redOffY * p.r * 0.25;
+    var rg = drawingContext.createRadialGradient(rCx, rCy, p.r * 0.38, rCx, rCy, p.r * 1.02);
+    rg.addColorStop(0, 'rgba(0,0,0,0)');
+    rg.addColorStop(1, 'rgb(' + cr + ',20,52)');
     drawingContext.fillStyle = rg;
     drawingContext.fillRect(p.x - r2, p.y - r2, r4, r4);
 
