@@ -42,16 +42,19 @@ function setup() {
 
     // Each blob is a fixed dot cloud — random offsets within radius, stored once
     var dots = [];
-    var numDots = max(6, floor(r * 1.8));
+    var numDots = max(8, floor(r * 2.4));
     for (var d = 0; d < numDots; d++) {
       var da = random(TWO_PI);
-      var dr = sqrt(random()) * r * 0.92; // uniform disk distribution
+      // 75% near edge (organic density), 25% scattered interior
+      var dr = random() < 0.75
+        ? r * random(0.52, 0.97)
+        : sqrt(random()) * r * 0.5;
       var c  = random(1);
       dots.push({
         ox:  cos(da) * dr,
         oy:  sin(da) * dr,
-        col: c < 0.42 ? 0 : c < 0.84 ? 1 : 2, // 0=blue 1=red 2=white
-        sz:  random(1.2, 4.0),
+        col: c < 0.42 ? 0 : c < 0.84 ? 1 : 2,
+        sz:  random(0.8, 2.2),
         a:   random(160, 255)
       });
     }
