@@ -52,7 +52,10 @@ function setup() {
       r: r,
       verts: numVerts,
       offsets: offsets,
-      gradAngle: random(TWO_PI)   // unique gradient flow direction per drop
+      // Random centers for each color patch (fractions of r, stored once)
+      blueOffX:  random(-0.55, 0.55), blueOffY:  random(-0.55, 0.55),
+      redOffX:   random(-0.55, 0.55), redOffY:   random(-0.55, 0.55),
+      shineOffX: random(-0.40, 0.40), shineOffY: random(-0.40, 0.40)
     });
   }
 
@@ -167,36 +170,24 @@ function draw() {
   drawingContext.clip();
 
   // ── PEBBLES ───────────────────────────────────────────────
-  // BLEND mode (source-over): no additive blowout, no opacity artifacts.
-  // Each blob gets two fills on the same live canvas path:
-  //   1. Conic gradient  — tricolor sweeping around the blob center.
-  //      gradAngle rotates the sweep uniquely per drop → freeform feel.
-  //   2. Radial vignette — transparent center → dark edge → 3D depth.
-  // Beat flash in ADD mode is drawn on top of all blobs afterward.
+  // Each blob has three color patches at independently random centers,
+  // stored at creation and fixed to the blob forever:
+  //   blue pool  — large radial at blueOff
+  //   red pool   — large radial at redOff
+  //   white shine — tight radial at shineOff
+  // Drawn in ADD mode clipped to the blob shape, so they scatter and
+  // overlap differently in every drop. Vignette pass darkens edges.
   noStroke();
-  fill(0); // forces p5 to build the blob path; black is invisible on black bg
+  fill(0); // forces p5 to build blob path; black is invisible on black bg
 
   for (var i = 0; i < pebbles.length; i++) {
     var p = pebbles[i];
     var f  = 1.0 + pulseFlash * 0.5;
     var bl = ~~min(255, 155 * f);
     var cr = ~~min(255, 210 * f);
+    var r2 = p.r * 2, r4 = p.r * 4; // reused below
 
-    // Conic gradient: colors sweep around the blob at its unique stored angle
-    var conic = drawingContext.createConicGradient(p.gradAngle, p.x, p.y);
-    conic.addColorStop(0,    'rgb(215, 232, 255)');
-    conic.addColorStop(0.28, 'rgb(0,' + bl + ',255)');
-    conic.addColorStop(0.62, 'rgb(' + cr + ',28,50)');
-    conic.addColorStop(0.86, 'rgb(16,2,6)');
-    conic.addColorStop(1,    'rgb(215, 232, 255)');
-
-    // Vignette: radial darkening toward the blob edge for 3D depth
-    var vig = drawingContext.createRadialGradient(p.x, p.y, p.r * 0.2, p.x, p.y, p.r * 1.05);
-    vig.addColorStop(0,    'rgba(0,0,0,0)');
-    vig.addColorStop(0.52, 'rgba(0,0,0,0)');
-    vig.addColorStop(1,    'rgba(0,0,0,0.75)');
-
-    // Build the original blob path via p5's curveVertex
+    // Build blob path (p5 fills black, path stays live)
     beginShape();
     for (var v = 0; v < p.verts; v++) {
       var a = TWO_PI * v / p.verts;
@@ -208,10 +199,44 @@ function draw() {
       var rr = p.r * p.offsets[v];
       curveVertex(round(p.x + cos(a) * rr), round(p.y + sin(a) * rr));
     }
-    endShape(); // p5 fills black, path stays live
+    endShape();
 
-    drawingContext.fillStyle = conic; drawingContext.fill(); // tricolor sweep
-    drawingContext.fillStyle = vig;   drawingContext.fill(); // edge shadow
+    // Clip to this blob, paint scattered color patches in ADD mode
+    drawingContext.save();
+    drawingContext.clip();
+    drawingContext.globalCompositeOperation = 'lighter';
+
+    var bx = p.x + p.blueOffX * p.r, by = p.y + p.blueOffY * p.r;
+    var bg = drawingContext.createRadialGradient(bx, by, 0, bx, by, p.r);
+    bg.addColorStop(0, 'rgb(0,' + bl + ',255)');
+    bg.addColorStop(1, 'rgba(0,0,0,0)');
+    drawingContext.fillStyle = bg;
+    drawingContext.fillRect(p.x - r2, p.y - r2, r4, r4);
+
+    var rx = p.x + p.redOffX * p.r, ry = p.y + p.redOffY * p.r;
+    var rg = drawingContext.createRadialGradient(rx, ry, 0, rx, ry, p.r);
+    rg.addColorStop(0, 'rgb(' + cr + ',28,50)');
+    rg.addColorStop(1, 'rgba(0,0,0,0)');
+    drawingContext.fillStyle = rg;
+    drawingContext.fillRect(p.x - r2, p.y - r2, r4, r4);
+
+    var sx = p.x + p.shineOffX * p.r, sy = p.y + p.shineOffY * p.r;
+    var sg = drawingContext.createRadialGradient(sx, sy, 0, sx, sy, p.r * 0.36);
+    sg.addColorStop(0, 'rgba(255,255,255,0.92)');
+    sg.addColorStop(1, 'rgba(0,0,0,0)');
+    drawingContext.fillStyle = sg;
+    drawingContext.fillRect(p.x - r2, p.y - r2, r4, r4);
+
+    // Restore: removes clip and resets composite to source-over
+    drawingContext.restore();
+
+    // Vignette — path survives save/restore, darkens the blob edge
+    var vig = drawingContext.createRadialGradient(p.x, p.y, p.r * 0.2, p.x, p.y, p.r * 1.05);
+    vig.addColorStop(0,    'rgba(0,0,0,0)');
+    vig.addColorStop(0.52, 'rgba(0,0,0,0)');
+    vig.addColorStop(1,    'rgba(0,0,0,0.75)');
+    drawingContext.fillStyle = vig;
+    drawingContext.fill();
   }
 
   // ── BEAT FLASH — ADD mode on top of blobs, brightens whole face ──
