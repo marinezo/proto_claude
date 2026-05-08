@@ -64,6 +64,7 @@ function setup() {
       vx: random(-0.5, 0.5),
       vy: random(0, 1),
       r:  r,
+      mainCol: floor(random(2)), // 0=blue, 1=red
       dots: dots
     });
   }
@@ -231,6 +232,17 @@ function draw() {
   for (var i = 0; i < pebbles.length; i++) {
     var p = pebbles[i];
     var f = 1.0 + pulseFlash * 1.8;
+
+    // blob body — two soft glow layers give it mass and volume
+    var mr = p.mainCol === 0 ? 0   : min(255, 220*f);
+    var mg = p.mainCol === 0 ? min(255, 130*f) : 20;
+    var mb = p.mainCol === 0 ? 255 : 50;
+    fill(mr, mg, mb, 12);
+    ellipse(p.x, p.y, p.r * 5.5, p.r * 5.5);
+    fill(mr, mg, mb, 38);
+    ellipse(p.x, p.y, p.r * 2.4, p.r * 2.4);
+
+    // edge dot cloud — organic rim texture
     for (var d = 0; d < p.dots.length; d++) {
       var dt = p.dots[d];
       var alpha = min(255, dt.a * f);
