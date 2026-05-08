@@ -190,8 +190,8 @@ function draw() {
   // With ADD blending the near-black shadow blends into the bg naturally,
   // giving the soft edge feel without explicit transparency tricks.
   blendMode(ADD);
-  noFill();
   noStroke();
+  fill(0, 0, 0); // black adds nothing in ADD mode but forces p5 to build each blob path
 
   for (var i = 0; i < pebbles.length; i++) {
     var p = pebbles[i];
