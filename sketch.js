@@ -12,13 +12,11 @@ var cx, cy;
 var WATCH_R = 200;
 var NUM_PEBBLES = 90;
 
-// Color palette — electric blue, coral-red, violet, amber, teal
+// Two-color palette: electric blue / crimson red
+// White appears only as the specular highlight inside each gradient
 var PALETTE = [
-  [0,   180, 255],
-  [255,  55,  85],
-  [180,  60, 255],
-  [255, 130,  25],
-  [0,   220, 155],
+  'blue',
+  'red',
 ];
 
 // Pulse
@@ -60,7 +58,7 @@ function setup() {
       r: r,
       verts: numVerts,
       offsets: offsets,
-      colorIdx: floor(random(PALETTE.length))
+      colorIdx: floor(random(2))   // 0 = blue, 1 = red
     });
   }
 
@@ -174,11 +172,11 @@ function draw() {
 
   // ── AMBIENT PULSE BLOOM ───────────────────────────────────
   if (pulseFlash > 0) {
-    var a1 = (pulseFlash * 0.14).toFixed(3);
-    var a2 = (pulseFlash * 0.06).toFixed(3);
+    var a1 = (pulseFlash * 0.18).toFixed(3);
+    var a2 = (pulseFlash * 0.07).toFixed(3);
     var bloom = drawingContext.createRadialGradient(cx, cy, 0, cx, cy, WATCH_R);
-    bloom.addColorStop(0,    'rgba(160, 60, 255, ' + a1 + ')');
-    bloom.addColorStop(0.45, 'rgba(0, 110, 220, '  + a2 + ')');
+    bloom.addColorStop(0,    'rgba(255, 80, 80, '   + a1 + ')');
+    bloom.addColorStop(0.45, 'rgba(0, 100, 255, '   + a2 + ')');
     bloom.addColorStop(1,    'rgba(0, 0, 0, 0)');
     drawingContext.fillStyle = bloom;
     drawingContext.beginPath();
@@ -186,44 +184,62 @@ function draw() {
     drawingContext.fill();
   }
 
-  // ── PEBBLES — additive glow layers ────────────────────────
+  // ── PEBBLES — 3D radial gradient, no halos ────────────────
+  // Each drop is a single gradient blob: white specular highlight
+  // offset to top-left → saturated color → deep shadow → transparent edge.
+  // ADD blending means blue+red overlaps bloom toward white.
   blendMode(ADD);
-  noStroke();
+  drawingContext.globalCompositeOperation = 'lighter';
 
   for (var i = 0; i < pebbles.length; i++) {
     var p = pebbles[i];
-    var col = PALETTE[p.colorIdx];
-    var flash = 1.0 + pulseFlash * 1.8;
-    var r = min(255, col[0] * flash);
-    var g = min(255, col[1] * flash);
-    var b = min(255, col[2] * flash);
+    var f  = 1.0 + pulseFlash * 0.9;   // brightness multiplier on beat
 
-    // Layer 1 — wide soft halo
-    fill(r, g, b, 14);
-    ellipse(p.x, p.y, p.r * 6.5, p.r * 6.5);
+    // Highlight origin: offset toward top-left for 3D sphere illusion
+    var hx = p.x - p.r * 0.33;
+    var hy = p.y - p.r * 0.33;
+    var grad = drawingContext.createRadialGradient(
+      hx, hy, p.r * 0.05,   // inner — tight highlight
+      p.x, p.y, p.r * 1.12  // outer — slightly beyond blob edge (soft blur)
+    );
 
-    // Layer 2 — mid glow
-    fill(r, g, b, 36);
-    ellipse(p.x, p.y, p.r * 3.6, p.r * 3.6);
+    if (p.colorIdx === 0) {
+      // Electric blue
+      var s = ~~min(255, 180 * f);
+      grad.addColorStop(0,    'rgba(210, 235, 255, 1)');
+      grad.addColorStop(0.25, 'rgba(0, ' + s + ', 255, 1)');
+      grad.addColorStop(0.72, 'rgba(0, 22, 70, 1)');
+      grad.addColorStop(1,    'rgba(0, 0, 0, 0)');
+    } else {
+      // Crimson red
+      var s = ~~min(255, 220 * f);
+      grad.addColorStop(0,    'rgba(255, 220, 220, 1)');
+      grad.addColorStop(0.25, 'rgba(' + s + ', 35, 60, 1)');
+      grad.addColorStop(0.72, 'rgba(65, 0, 10, 1)');
+      grad.addColorStop(1,    'rgba(0, 0, 0, 0)');
+    }
 
-    // Layer 3 — organic blob body
-    fill(r, g, b, 90);
-    beginShape();
+    // Build smooth blob path via quadratic curves through vertex midpoints
+    var vx = [], vy = [];
     for (var v = 0; v < p.verts; v++) {
       var a = TWO_PI * v / p.verts;
       var rr = p.r * p.offsets[v];
-      curveVertex(p.x + cos(a) * rr, p.y + sin(a) * rr);
+      vx.push(p.x + cos(a) * rr);
+      vy.push(p.y + sin(a) * rr);
     }
-    for (var v = 0; v < 3; v++) {
-      var a = TWO_PI * v / p.verts;
-      var rr = p.r * p.offsets[v];
-      curveVertex(p.x + cos(a) * rr, p.y + sin(a) * rr);
+    var n = p.verts;
+    drawingContext.beginPath();
+    drawingContext.moveTo((vx[n-1] + vx[0]) / 2, (vy[n-1] + vy[0]) / 2);
+    for (var v = 0; v < n; v++) {
+      var nv = (v + 1) % n;
+      drawingContext.quadraticCurveTo(
+        vx[v], vy[v],
+        (vx[v] + vx[nv]) / 2, (vy[v] + vy[nv]) / 2
+      );
     }
-    endShape();
-
-    // Layer 4 — bright hot core
-    fill(min(255, r + 90), min(255, g + 90), min(255, b + 90), 215);
-    ellipse(p.x, p.y, p.r * 0.6, p.r * 0.6);
+    drawingContext.closePath();
+    drawingContext.fillStyle = grad;
+    drawingContext.fill();
   }
 
   blendMode(BLEND);
