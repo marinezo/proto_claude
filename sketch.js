@@ -44,6 +44,8 @@ function setup() {
     for (var v = 0; v < numVerts; v++) {
       offsets.push(random(0.95, 1.05));
     }
+    var blueAng = random(TWO_PI), blueRad = random(0.42, 0.72);
+    var redAng  = random(TWO_PI), redRad  = random(0.42, 0.72);
     pebbles.push({
       x: cx + cos(ang) * dist_from_center,
       y: cy + sin(ang) * dist_from_center - WATCH_R * 0.3,
@@ -52,9 +54,9 @@ function setup() {
       r: r,
       verts: numVerts,
       offsets: offsets,
-      // Random centers for each color patch (fractions of r, stored once)
-      blueOffX:  random(-0.55, 0.55), blueOffY:  random(-0.55, 0.55),
-      redOffX:   random(-0.55, 0.55), redOffY:   random(-0.55, 0.55)
+      // Color centers pushed toward the blob rim — backlit glow
+      blueOffX: cos(blueAng) * blueRad, blueOffY: sin(blueAng) * blueRad,
+      redOffX:  cos(redAng)  * redRad,  redOffY:  sin(redAng)  * redRad
     });
   }
 
@@ -205,31 +207,23 @@ function draw() {
     drawingContext.clip();
     drawingContext.globalCompositeOperation = 'lighter';
 
-    // Boosted values so the ADD overlap zone naturally reads as a bright shine
+    // Color patches near the rim — center stays dark, glow lives at the edge
     var bx = p.x + p.blueOffX * p.r, by = p.y + p.blueOffY * p.r;
-    var bg = drawingContext.createRadialGradient(bx, by, 0, bx, by, p.r * 1.1);
-    bg.addColorStop(0, 'rgb(40,' + ~~min(255, bl + 40) + ',255)');
+    var bg = drawingContext.createRadialGradient(bx, by, 0, bx, by, p.r * 0.68);
+    bg.addColorStop(0, 'rgb(20,' + bl + ',255)');
     bg.addColorStop(1, 'rgba(0,0,0,0)');
     drawingContext.fillStyle = bg;
     drawingContext.fillRect(p.x - r2, p.y - r2, r4, r4);
 
     var rx = p.x + p.redOffX * p.r, ry = p.y + p.redOffY * p.r;
-    var rg = drawingContext.createRadialGradient(rx, ry, 0, rx, ry, p.r * 1.1);
-    rg.addColorStop(0, 'rgb(' + ~~min(255, cr + 40) + ',40,70)');
+    var rg = drawingContext.createRadialGradient(rx, ry, 0, rx, ry, p.r * 0.68);
+    rg.addColorStop(0, 'rgb(' + cr + ',25,55)');
     rg.addColorStop(1, 'rgba(0,0,0,0)');
     drawingContext.fillStyle = rg;
     drawingContext.fillRect(p.x - r2, p.y - r2, r4, r4);
 
-    // Restore: removes clip and resets composite to source-over
+    // Restore: removes clip, resets composite to source-over
     drawingContext.restore();
-
-    // Edge shade — solid dark color (no alpha), just a hint
-    var vig = drawingContext.createRadialGradient(p.x, p.y, p.r * 0.5, p.x, p.y, p.r * 1.05);
-    vig.addColorStop(0,    'rgba(0,0,0,0)');
-    vig.addColorStop(0.78, 'rgba(0,0,0,0)');
-    vig.addColorStop(1,    'rgb(12,4,8)');
-    drawingContext.fillStyle = vig;
-    drawingContext.fill();
   }
 
   // ── BEAT FLASH — ADD mode on top of blobs, brightens whole face ──
