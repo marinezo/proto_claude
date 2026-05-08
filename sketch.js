@@ -88,8 +88,8 @@ function physicsTick(isPulse) {
         freeDots.push({
           x:   p.x + dt.ox,
           y:   p.y + dt.oy,
-          vx:  p.vx + random(-2.5, 2.5),
-          vy:  p.vy + random(-5, -1),
+          vx:  p.vx + random(-2, 2),
+          vy:  p.vy + random(-2, 1),
           col: dt.col,
           sz:  dt.sz,
           a:   dt.a
@@ -103,11 +103,12 @@ function physicsTick(isPulse) {
   // free dot physics — gravity + circular boundary
   for (var i = 0; i < freeDots.length; i++) {
     var fd = freeDots[i];
-    fd.vy += 0.13;
+    fd.vy -= 0.09;                    // float upward
+    fd.vx += random(-0.04, 0.04);    // gentle horizontal wobble
     fd.x  += fd.vx;
     fd.y  += fd.vy;
-    fd.vx *= 0.87;
-    fd.vy *= 0.87;
+    fd.vx *= 0.90;
+    fd.vy *= 0.90;
     if (abs(fd.vx) < 0.05 && abs(fd.vy) < 0.05) { fd.vx = 0; fd.vy = 0; }
     var dx = fd.x - cx, dy = fd.y - cy;
     var dd = sqrt(dx*dx + dy*dy);
