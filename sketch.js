@@ -221,8 +221,8 @@ function draw() {
     drawingContext.fillRect(p.x - r2, p.y - r2, r4, r4);
 
     var sx = p.x + p.shineOffX * p.r, sy = p.y + p.shineOffY * p.r;
-    var sg = drawingContext.createRadialGradient(sx, sy, 0, sx, sy, p.r * 0.36);
-    sg.addColorStop(0, 'rgba(255,255,255,0.92)');
+    var sg = drawingContext.createRadialGradient(sx, sy, 0, sx, sy, p.r * 0.65);
+    sg.addColorStop(0, 'rgba(180,205,255,0.60)');
     sg.addColorStop(1, 'rgba(0,0,0,0)');
     drawingContext.fillStyle = sg;
     drawingContext.fillRect(p.x - r2, p.y - r2, r4, r4);
@@ -234,9 +234,14 @@ function draw() {
     var vig = drawingContext.createRadialGradient(p.x, p.y, p.r * 0.2, p.x, p.y, p.r * 1.05);
     vig.addColorStop(0,    'rgba(0,0,0,0)');
     vig.addColorStop(0.52, 'rgba(0,0,0,0)');
-    vig.addColorStop(1,    'rgba(0,0,0,0.75)');
+    vig.addColorStop(1,    'rgba(0,0,0,0.38)');
     drawingContext.fillStyle = vig;
     drawingContext.fill();
+
+    // Thin white stroke to define the blob silhouette
+    drawingContext.strokeStyle = 'rgba(255,255,255,0.8)';
+    drawingContext.lineWidth   = 1;
+    drawingContext.stroke();
   }
 
   // ── BEAT FLASH — ADD mode on top of blobs, brightens whole face ──
