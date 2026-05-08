@@ -52,7 +52,7 @@ function setup() {
       r: r,
       verts: numVerts,
       offsets: offsets,
-      colorIdx: floor(random(2))   // 0 = blue, 1 = red
+      gradAngle: random(TWO_PI)   // unique gradient flow direction per drop
     });
   }
 
@@ -181,58 +181,52 @@ function draw() {
   }
 
   // ── PEBBLES ───────────────────────────────────────────────
-  // Every drop: tricolor radial gradient (white → blue → crimson → shadow → transparent).
-  // Gradient center offset top-left = 3D sphere illusion.
-  // Shapes are your original pebbles, reproduced via Catmull-Rom → Bezier
-  // conversion so drawingContext can gradient-fill them exactly.
-  // ADD blending: overlapping drops bloom toward white.
+  // Shape: your exact original curveVertex blobs. p5 writes the canvas path
+  // even with noFill, so we grab it immediately after endShape and fill it
+  // with the gradient ourselves via drawingContext.fill().
+  //
+  // Gradient: linear, at a unique angle per drop (stored at creation).
+  // Tricolor: white → electric blue → crimson → near-black shadow.
+  // With ADD blending the near-black shadow blends into the bg naturally,
+  // giving the soft edge feel without explicit transparency tricks.
   blendMode(ADD);
-  drawingContext.globalCompositeOperation = 'lighter';
+  noFill();
+  noStroke();
 
   for (var i = 0; i < pebbles.length; i++) {
     var p = pebbles[i];
-    var f = 1.0 + pulseFlash * 0.85;
-
-    // Highlight offset: top-left of drop (simulates overhead-left light)
-    var hx = p.x - p.r * 0.35;
-    var hy = p.y - p.r * 0.35;
-    var grad = drawingContext.createRadialGradient(
-      hx, hy, p.r * 0.04,   // tight highlight source
-      p.x, p.y, p.r * 1.1   // sphere boundary + tiny bleed for soft edge
-    );
-    var wb = ~~min(255, 255 * f);
-    var bl = ~~min(255, 180 * f);
+    var f  = 1.0 + pulseFlash * 0.85;
+    var bl = ~~min(255, 165 * f);
     var cr = ~~min(255, 215 * f);
-    grad.addColorStop(0,    'rgba(' + wb  + ',' + wb  + ',' + wb  + ',0.92)');  // white highlight
-    grad.addColorStop(0.28, 'rgba(0,'    + bl  + ',255,1)');                     // electric blue
-    grad.addColorStop(0.60, 'rgba(' + cr + ',35,60,1)');                         // crimson
-    grad.addColorStop(0.84, 'rgba(30,5,18,1)');                                  // deep shadow
-    grad.addColorStop(1,    'rgba(0,0,0,0)');                                    // transparent edge
 
-    // Reproduce your original pebble shape: Catmull-Rom spline via Bezier.
-    // This is the exact mathematical equivalent of p5's curveVertex.
-    var vx = [], vy = [];
+    // Linear gradient flows through the drop at its stored angle
+    var dx = cos(p.gradAngle) * p.r * 1.25;
+    var dy = sin(p.gradAngle) * p.r * 1.25;
+    var grad = drawingContext.createLinearGradient(
+      p.x - dx, p.y - dy,   // lit side
+      p.x + dx, p.y + dy    // shadow side
+    );
+    grad.addColorStop(0,    'rgba(235,245,255,0.93)');
+    grad.addColorStop(0.30, 'rgba(0,' + bl + ',255,1)');
+    grad.addColorStop(0.65, 'rgba(' + cr + ',35,58,1)');
+    grad.addColorStop(0.88, 'rgba(40,4,14,1)');
+    grad.addColorStop(1,    'rgba(6,0,2,1)');
+
+    // Draw your original blob shape via p5's curveVertex
+    beginShape();
     for (var v = 0; v < p.verts; v++) {
       var a = TWO_PI * v / p.verts;
       var rr = p.r * p.offsets[v];
-      vx.push(p.x + cos(a) * rr);
-      vy.push(p.y + sin(a) * rr);
+      curveVertex(round(p.x + cos(a) * rr), round(p.y + sin(a) * rr));
     }
-    var n = p.verts;
-    drawingContext.beginPath();
-    drawingContext.moveTo(vx[0], vy[0]);
-    for (var v = 0; v < n; v++) {
-      var p0 = (v - 1 + n) % n,
-          p1 = v,
-          p2 = (v + 1) % n,
-          p3 = (v + 2) % n;
-      var cp1x = vx[p1] + (vx[p2] - vx[p0]) / 6;
-      var cp1y = vy[p1] + (vy[p2] - vy[p0]) / 6;
-      var cp2x = vx[p2] - (vx[p3] - vx[p1]) / 6;
-      var cp2y = vy[p2] - (vy[p3] - vy[p1]) / 6;
-      drawingContext.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, vx[p2], vy[p2]);
+    for (var v = 0; v < 3; v++) {
+      var a = TWO_PI * v / p.verts;
+      var rr = p.r * p.offsets[v];
+      curveVertex(round(p.x + cos(a) * rr), round(p.y + sin(a) * rr));
     }
-    drawingContext.closePath();
+    endShape();
+
+    // Path is still live in the canvas context — fill it with the gradient
     drawingContext.fillStyle = grad;
     drawingContext.fill();
   }
