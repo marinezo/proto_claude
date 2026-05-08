@@ -45,7 +45,7 @@ function setup() {
     var numDots = max(10, floor(r * 3.0));
     for (var d = 0; d < numDots; d++) {
       var da = random(TWO_PI);
-      var dr = r * random(0.68, 0.99); // edge band only
+      var dr = r * pow(random(), 0.35); // dense at edge, gradually thins inward
       var c  = random(1);
       dots.push({
         ox:  cos(da) * dr,
