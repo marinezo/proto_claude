@@ -166,53 +166,37 @@ function draw() {
   drawingContext.arc(cx, cy, WATCH_R - 1, 0, Math.PI * 2);
   drawingContext.clip();
 
-  // ── BEAT FLASH — bright white bloom across the whole face ─
-  if (screenFlash > 0) {
-    var sf = screenFlash;
-    var flash = drawingContext.createRadialGradient(cx, cy, 0, cx, cy, WATCH_R);
-    flash.addColorStop(0,    'rgba(255,255,255,' + (sf * 0.55).toFixed(3) + ')');
-    flash.addColorStop(0.35, 'rgba(180,120,255,' + (sf * 0.30).toFixed(3) + ')');
-    flash.addColorStop(0.70, 'rgba(0,80,200,'    + (sf * 0.12).toFixed(3) + ')');
-    flash.addColorStop(1,    'rgba(0,0,0,0)');
-    drawingContext.fillStyle = flash;
-    drawingContext.beginPath();
-    drawingContext.arc(cx, cy, WATCH_R, 0, Math.PI * 2);
-    drawingContext.fill();
-  }
-
   // ── PEBBLES ───────────────────────────────────────────────
-  // Shape: your exact original curveVertex blobs. p5 writes the canvas path
-  // even with noFill, so we grab it immediately after endShape and fill it
-  // with the gradient ourselves via drawingContext.fill().
-  //
-  // Gradient: linear, at a unique angle per drop (stored at creation).
-  // Tricolor: white → electric blue → crimson → near-black shadow.
-  // With ADD blending the near-black shadow blends into the bg naturally,
-  // giving the soft edge feel without explicit transparency tricks.
-  blendMode(ADD);
+  // BLEND mode (source-over): no additive blowout, no opacity artifacts.
+  // Each blob gets two fills on the same live canvas path:
+  //   1. Conic gradient  — tricolor sweeping around the blob center.
+  //      gradAngle rotates the sweep uniquely per drop → freeform feel.
+  //   2. Radial vignette — transparent center → dark edge → 3D depth.
+  // Beat flash in ADD mode is drawn on top of all blobs afterward.
   noStroke();
-  fill(0, 0, 0); // black adds nothing in ADD mode but forces p5 to build each blob path
+  fill(0); // forces p5 to build the blob path; black is invisible on black bg
 
   for (var i = 0; i < pebbles.length; i++) {
     var p = pebbles[i];
-    var f  = 1.0 + pulseFlash * 0.85;
-    var bl = ~~min(255, 165 * f);
-    var cr = ~~min(255, 215 * f);
+    var f  = 1.0 + pulseFlash * 0.5;
+    var bl = ~~min(255, 155 * f);
+    var cr = ~~min(255, 210 * f);
 
-    // Linear gradient flows through the drop at its stored angle
-    var dx = cos(p.gradAngle) * p.r * 1.25;
-    var dy = sin(p.gradAngle) * p.r * 1.25;
-    var grad = drawingContext.createLinearGradient(
-      p.x - dx, p.y - dy,   // lit side
-      p.x + dx, p.y + dy    // shadow side
-    );
-    grad.addColorStop(0,    'rgba(235,245,255,0.93)');
-    grad.addColorStop(0.30, 'rgba(0,' + bl + ',255,1)');
-    grad.addColorStop(0.65, 'rgba(' + cr + ',35,58,1)');
-    grad.addColorStop(0.88, 'rgba(40,4,14,1)');
-    grad.addColorStop(1,    'rgba(6,0,2,1)');
+    // Conic gradient: colors sweep around the blob at its unique stored angle
+    var conic = drawingContext.createConicGradient(p.gradAngle, p.x, p.y);
+    conic.addColorStop(0,    'rgb(215, 232, 255)');
+    conic.addColorStop(0.28, 'rgb(0,' + bl + ',255)');
+    conic.addColorStop(0.62, 'rgb(' + cr + ',28,50)');
+    conic.addColorStop(0.86, 'rgb(16,2,6)');
+    conic.addColorStop(1,    'rgb(215, 232, 255)');
 
-    // Draw your original blob shape via p5's curveVertex
+    // Vignette: radial darkening toward the blob edge for 3D depth
+    var vig = drawingContext.createRadialGradient(p.x, p.y, p.r * 0.2, p.x, p.y, p.r * 1.05);
+    vig.addColorStop(0,    'rgba(0,0,0,0)');
+    vig.addColorStop(0.52, 'rgba(0,0,0,0)');
+    vig.addColorStop(1,    'rgba(0,0,0,0.75)');
+
+    // Build the original blob path via p5's curveVertex
     beginShape();
     for (var v = 0; v < p.verts; v++) {
       var a = TWO_PI * v / p.verts;
@@ -224,14 +208,27 @@ function draw() {
       var rr = p.r * p.offsets[v];
       curveVertex(round(p.x + cos(a) * rr), round(p.y + sin(a) * rr));
     }
-    endShape();
+    endShape(); // p5 fills black, path stays live
 
-    // Path is still live in the canvas context — fill it with the gradient
-    drawingContext.fillStyle = grad;
-    drawingContext.fill();
+    drawingContext.fillStyle = conic; drawingContext.fill(); // tricolor sweep
+    drawingContext.fillStyle = vig;   drawingContext.fill(); // edge shadow
   }
 
-  blendMode(BLEND);
+  // ── BEAT FLASH — ADD mode on top of blobs, brightens whole face ──
+  if (screenFlash > 0) {
+    blendMode(ADD);
+    var sf = screenFlash;
+    var flash = drawingContext.createRadialGradient(cx, cy, 0, cx, cy, WATCH_R);
+    flash.addColorStop(0,    'rgba(255,255,255,' + (sf * 0.55).toFixed(3) + ')');
+    flash.addColorStop(0.35, 'rgba(180,120,255,' + (sf * 0.30).toFixed(3) + ')');
+    flash.addColorStop(0.70, 'rgba(0,80,200,'    + (sf * 0.12).toFixed(3) + ')');
+    flash.addColorStop(1,    'rgba(0,0,0,0)');
+    drawingContext.fillStyle = flash;
+    drawingContext.beginPath();
+    drawingContext.arc(cx, cy, WATCH_R, 0, Math.PI * 2);
+    drawingContext.fill();
+    blendMode(BLEND);
+  }
 
   // ── HEART + BPM ───────────────────────────────────────────
   var heartY = WATCH_R * 0.62;
