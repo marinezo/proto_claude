@@ -42,10 +42,10 @@ function setup() {
 
     // Each blob is a fixed dot cloud — random offsets within radius, stored once
     var dots = [];
-    var numDots = max(10, floor(r * 3.0));
+    var numDots = max(50, floor(r * 6.0));
     for (var d = 0; d < numDots; d++) {
       var da = random(TWO_PI);
-      var dr = r * pow(random(), 0.12); // steep edge density, sparse interior
+      var dr = r * pow(random(), 0.22); // steep edge density, sparse interior
       var c  = random(1);
       dots.push({
         ox:  cos(da) * dr,
