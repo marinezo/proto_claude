@@ -13,6 +13,8 @@ var WATCH_R = 200;
 var NUM_PEBBLES = 90;
 
 // Pulse
+var freeDots = [];        // dots that escaped from blobs on beat
+var MAX_FREE_DOTS = 800;
 var readings = [];
 var maxReadings = 20;
 var lastBeatTime = 0;
@@ -79,6 +81,43 @@ function physicsTick(isPulse) {
       var p = pebbles[i];
       p.vx += random(-3, 3);
       p.vy += random(-12, -6);
+      // shed a few dots on each beat
+      var shed = floor(random(2, 6));
+      for (var s = 0; s < shed; s++) {
+        var dt = p.dots[floor(random(p.dots.length))];
+        freeDots.push({
+          x:   p.x + dt.ox,
+          y:   p.y + dt.oy,
+          vx:  p.vx + random(-2.5, 2.5),
+          vy:  p.vy + random(-5, -1),
+          col: dt.col,
+          sz:  dt.sz,
+          a:   dt.a
+        });
+      }
+    }
+    if (freeDots.length > MAX_FREE_DOTS)
+      freeDots.splice(0, freeDots.length - MAX_FREE_DOTS);
+  }
+
+  // free dot physics — gravity + circular boundary
+  for (var i = 0; i < freeDots.length; i++) {
+    var fd = freeDots[i];
+    fd.vy += 0.13;
+    fd.x  += fd.vx;
+    fd.y  += fd.vy;
+    fd.vx *= 0.87;
+    fd.vy *= 0.87;
+    if (abs(fd.vx) < 0.05 && abs(fd.vy) < 0.05) { fd.vx = 0; fd.vy = 0; }
+    var dx = fd.x - cx, dy = fd.y - cy;
+    var dd = sqrt(dx*dx + dy*dy);
+    var maxD = WATCH_R - 2;
+    if (dd > maxD && dd > 0.01) {
+      var nx = dx/dd, ny = dy/dd;
+      fd.x = cx + nx * maxD;
+      fd.y = cy + ny * maxD;
+      var dot = fd.vx*nx + fd.vy*ny;
+      if (dot > 0) { fd.vx -= 2*dot*nx*0.3; fd.vy -= 2*dot*ny*0.3; }
     }
   }
 
@@ -198,6 +237,16 @@ function draw() {
       else                   fill(min(255, 230*f), min(255, 215*f), 255, alpha);
       ellipse(p.x + dt.ox, p.y + dt.oy, dt.sz, dt.sz);
     }
+  }
+
+  // free dots — settled at bottom, scattered from blobs on beat
+  for (var i = 0; i < freeDots.length; i++) {
+    var fd = freeDots[i];
+    var alpha = min(255, fd.a * f);
+    if (fd.col === 0)      fill(0,   min(255, 160*f), 255, alpha);
+    else if (fd.col === 1) fill(min(255, 220*f), 25, 55, alpha);
+    else                   fill(min(255, 230*f), min(255, 215*f), 255, alpha);
+    ellipse(fd.x, fd.y, fd.sz, fd.sz);
   }
 
   blendMode(BLEND);
