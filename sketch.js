@@ -14,7 +14,7 @@ var NUM_PEBBLES = 90;
 
 // Pulse
 var freeDots = [];        // dots that escaped from blobs on beat
-var MAX_FREE_DOTS = 400;
+var MAX_FREE_DOTS = 800;
 var readings = [];
 var maxReadings = 20;
 var lastBeatTime = 0;
@@ -85,23 +85,15 @@ function physicsTick(isPulse) {
       var shed = floor(random(2, 6));
       for (var s = 0; s < shed; s++) {
         var dt = p.dots[floor(random(p.dots.length))];
-        var fr = random(3, 9);
-        var fSubs = [];
-        var nSub = max(4, floor(fr * 1.5));
-        for (var q = 0; q < nSub; q++) {
-          var fa = random(TWO_PI);
-          var fdr = fr * pow(random(), 0.22);
-          fSubs.push({ ox: cos(fa)*fdr, oy: sin(fa)*fdr, sz: random(0.7, 2.0) });
-        }
         freeDots.push({
-          x:    p.x + dt.ox,
-          y:    p.y + dt.oy,
+          x:   p.x + dt.ox,
+          y:   p.y + dt.oy,
           vx:   p.vx + random(-2, 2),
           vy:   p.vy + random(-2, 1),
-          grav: random(-0.14, 0.08),
-          col:  dt.col,
-          a:    dt.a,
-          subs: fSubs
+          grav: random(-0.14, 0.08), // negative = rises, positive = falls
+          col: dt.col,
+          sz:  dt.sz,
+          a:   dt.a
         });
       }
     }
@@ -249,17 +241,14 @@ function draw() {
     }
   }
 
-  // free dots — each is a mini blob cluster
+  // free dots — settled at bottom, scattered from blobs on beat
   for (var i = 0; i < freeDots.length; i++) {
     var fd = freeDots[i];
     var alpha = min(255, fd.a * f);
     if (fd.col === 0)      fill(0,   min(255, 160*f), 255, alpha);
     else if (fd.col === 1) fill(min(255, 220*f), 25, 55, alpha);
     else                   fill(min(255, 230*f), min(255, 215*f), 255, alpha);
-    for (var s = 0; s < fd.subs.length; s++) {
-      var sb = fd.subs[s];
-      ellipse(fd.x + sb.ox, fd.y + sb.oy, sb.sz, sb.sz);
-    }
+    ellipse(fd.x, fd.y, fd.sz, fd.sz);
   }
 
   blendMode(BLEND);
