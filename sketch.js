@@ -12,20 +12,14 @@ var cx, cy;
 var WATCH_R = 200;
 var NUM_PEBBLES = 90;
 
-// Two-color palette: electric blue / crimson red
-// White appears only as the specular highlight inside each gradient
-var PALETTE = [
-  'blue',
-  'red',
-];
-
 // Pulse
 var readings = [];
 var maxReadings = 20;
 var lastBeatTime = 0;
 var beatThreshold = 1.5;
 var indicatorFill = 0;
-var pulseFlash = 0;   // 1.0 on beat, decays to 0
+var pulseFlash  = 0;  // slow decay — brightens drops on beat
+var screenFlash = 0;  // fast decay — white bloom across the watch face
 var bpm = 0;
 var bpmHistory = [];
 var lastPulseMs = 0;
@@ -155,10 +149,12 @@ function draw() {
   if (isPulse) {
     lastBeatTime = now;
     indicatorFill = 1;
-    pulseFlash = 1.0;
+    pulseFlash  = 1.0;
+    screenFlash = 1.0;
   }
 
   pulseFlash    = max(0, pulseFlash    - 0.035);
+  screenFlash   = max(0, screenFlash   - 0.07);
   indicatorFill = max(0, indicatorFill - 0.03);
 
   // ── PHYSICS ───────────────────────────────────────────────
@@ -170,56 +166,51 @@ function draw() {
   drawingContext.arc(cx, cy, WATCH_R - 1, 0, Math.PI * 2);
   drawingContext.clip();
 
-  // ── AMBIENT PULSE BLOOM ───────────────────────────────────
-  if (pulseFlash > 0) {
-    var a1 = (pulseFlash * 0.18).toFixed(3);
-    var a2 = (pulseFlash * 0.07).toFixed(3);
-    var bloom = drawingContext.createRadialGradient(cx, cy, 0, cx, cy, WATCH_R);
-    bloom.addColorStop(0,    'rgba(255, 80, 80, '   + a1 + ')');
-    bloom.addColorStop(0.45, 'rgba(0, 100, 255, '   + a2 + ')');
-    bloom.addColorStop(1,    'rgba(0, 0, 0, 0)');
-    drawingContext.fillStyle = bloom;
+  // ── BEAT FLASH — bright white bloom across the whole face ─
+  if (screenFlash > 0) {
+    var sf = screenFlash;
+    var flash = drawingContext.createRadialGradient(cx, cy, 0, cx, cy, WATCH_R);
+    flash.addColorStop(0,    'rgba(255,255,255,' + (sf * 0.55).toFixed(3) + ')');
+    flash.addColorStop(0.35, 'rgba(180,120,255,' + (sf * 0.30).toFixed(3) + ')');
+    flash.addColorStop(0.70, 'rgba(0,80,200,'    + (sf * 0.12).toFixed(3) + ')');
+    flash.addColorStop(1,    'rgba(0,0,0,0)');
+    drawingContext.fillStyle = flash;
     drawingContext.beginPath();
     drawingContext.arc(cx, cy, WATCH_R, 0, Math.PI * 2);
     drawingContext.fill();
   }
 
-  // ── PEBBLES — 3D radial gradient, no halos ────────────────
-  // Each drop is a single gradient blob: white specular highlight
-  // offset to top-left → saturated color → deep shadow → transparent edge.
-  // ADD blending means blue+red overlaps bloom toward white.
+  // ── PEBBLES ───────────────────────────────────────────────
+  // Every drop: tricolor radial gradient (white → blue → crimson → shadow → transparent).
+  // Gradient center offset top-left = 3D sphere illusion.
+  // Shapes are your original pebbles, reproduced via Catmull-Rom → Bezier
+  // conversion so drawingContext can gradient-fill them exactly.
+  // ADD blending: overlapping drops bloom toward white.
   blendMode(ADD);
   drawingContext.globalCompositeOperation = 'lighter';
 
   for (var i = 0; i < pebbles.length; i++) {
     var p = pebbles[i];
-    var f  = 1.0 + pulseFlash * 0.9;   // brightness multiplier on beat
+    var f = 1.0 + pulseFlash * 0.85;
 
-    // Highlight origin: offset toward top-left for 3D sphere illusion
-    var hx = p.x - p.r * 0.33;
-    var hy = p.y - p.r * 0.33;
+    // Highlight offset: top-left of drop (simulates overhead-left light)
+    var hx = p.x - p.r * 0.35;
+    var hy = p.y - p.r * 0.35;
     var grad = drawingContext.createRadialGradient(
-      hx, hy, p.r * 0.05,   // inner — tight highlight
-      p.x, p.y, p.r * 1.12  // outer — slightly beyond blob edge (soft blur)
+      hx, hy, p.r * 0.04,   // tight highlight source
+      p.x, p.y, p.r * 1.1   // sphere boundary + tiny bleed for soft edge
     );
+    var wb = ~~min(255, 255 * f);
+    var bl = ~~min(255, 180 * f);
+    var cr = ~~min(255, 215 * f);
+    grad.addColorStop(0,    'rgba(' + wb  + ',' + wb  + ',' + wb  + ',0.92)');  // white highlight
+    grad.addColorStop(0.28, 'rgba(0,'    + bl  + ',255,1)');                     // electric blue
+    grad.addColorStop(0.60, 'rgba(' + cr + ',35,60,1)');                         // crimson
+    grad.addColorStop(0.84, 'rgba(30,5,18,1)');                                  // deep shadow
+    grad.addColorStop(1,    'rgba(0,0,0,0)');                                    // transparent edge
 
-    if (p.colorIdx === 0) {
-      // Electric blue
-      var s = ~~min(255, 180 * f);
-      grad.addColorStop(0,    'rgba(210, 235, 255, 1)');
-      grad.addColorStop(0.25, 'rgba(0, ' + s + ', 255, 1)');
-      grad.addColorStop(0.72, 'rgba(0, 22, 70, 1)');
-      grad.addColorStop(1,    'rgba(0, 0, 0, 0)');
-    } else {
-      // Crimson red
-      var s = ~~min(255, 220 * f);
-      grad.addColorStop(0,    'rgba(255, 220, 220, 1)');
-      grad.addColorStop(0.25, 'rgba(' + s + ', 35, 60, 1)');
-      grad.addColorStop(0.72, 'rgba(65, 0, 10, 1)');
-      grad.addColorStop(1,    'rgba(0, 0, 0, 0)');
-    }
-
-    // Build smooth blob path via quadratic curves through vertex midpoints
+    // Reproduce your original pebble shape: Catmull-Rom spline via Bezier.
+    // This is the exact mathematical equivalent of p5's curveVertex.
     var vx = [], vy = [];
     for (var v = 0; v < p.verts; v++) {
       var a = TWO_PI * v / p.verts;
@@ -229,13 +220,17 @@ function draw() {
     }
     var n = p.verts;
     drawingContext.beginPath();
-    drawingContext.moveTo((vx[n-1] + vx[0]) / 2, (vy[n-1] + vy[0]) / 2);
+    drawingContext.moveTo(vx[0], vy[0]);
     for (var v = 0; v < n; v++) {
-      var nv = (v + 1) % n;
-      drawingContext.quadraticCurveTo(
-        vx[v], vy[v],
-        (vx[v] + vx[nv]) / 2, (vy[v] + vy[nv]) / 2
-      );
+      var p0 = (v - 1 + n) % n,
+          p1 = v,
+          p2 = (v + 1) % n,
+          p3 = (v + 2) % n;
+      var cp1x = vx[p1] + (vx[p2] - vx[p0]) / 6;
+      var cp1y = vy[p1] + (vy[p2] - vy[p0]) / 6;
+      var cp2x = vx[p2] - (vx[p3] - vx[p1]) / 6;
+      var cp2y = vy[p2] - (vy[p3] - vy[p1]) / 6;
+      drawingContext.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, vx[p2], vy[p2]);
     }
     drawingContext.closePath();
     drawingContext.fillStyle = grad;
