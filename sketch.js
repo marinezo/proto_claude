@@ -223,18 +223,13 @@ function draw() {
     // Restore: removes clip and resets composite to source-over
     drawingContext.restore();
 
-    // Vignette — path survives save/restore, darkens the blob edge
-    var vig = drawingContext.createRadialGradient(p.x, p.y, p.r * 0.2, p.x, p.y, p.r * 1.05);
+    // Edge shade — solid dark color (no alpha), just a hint
+    var vig = drawingContext.createRadialGradient(p.x, p.y, p.r * 0.5, p.x, p.y, p.r * 1.05);
     vig.addColorStop(0,    'rgba(0,0,0,0)');
-    vig.addColorStop(0.52, 'rgba(0,0,0,0)');
-    vig.addColorStop(1,    'rgba(0,0,0,0.38)');
+    vig.addColorStop(0.78, 'rgba(0,0,0,0)');
+    vig.addColorStop(1,    'rgb(12,4,8)');
     drawingContext.fillStyle = vig;
     drawingContext.fill();
-
-    // Thin white stroke to define the blob silhouette
-    drawingContext.strokeStyle = 'rgba(255,255,255,0.95)';
-    drawingContext.lineWidth   = 0.5;
-    drawingContext.stroke();
   }
 
   // ── BEAT FLASH — ADD mode on top of blobs, brightens whole face ──
