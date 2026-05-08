@@ -42,13 +42,10 @@ function setup() {
 
     // Each blob is a fixed dot cloud — random offsets within radius, stored once
     var dots = [];
-    var numDots = max(8, floor(r * 2.4));
+    var numDots = max(10, floor(r * 3.0));
     for (var d = 0; d < numDots; d++) {
       var da = random(TWO_PI);
-      // 75% near edge (organic density), 25% scattered interior
-      var dr = random() < 0.75
-        ? r * random(0.52, 0.97)
-        : sqrt(random()) * r * 0.5;
+      var dr = r * random(0.68, 0.99); // edge band only
       var c  = random(1);
       dots.push({
         ox:  cos(da) * dr,
