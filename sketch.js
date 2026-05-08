@@ -39,24 +39,30 @@ function setup() {
     var r = random(5, 25);
     var ang = random(TWO_PI);
     var dist_from_center = random(0, WATCH_R - r - 2);
-    var numVerts = floor(random(10, 15));
-    var offsets = [];
-    for (var v = 0; v < numVerts; v++) {
-      offsets.push(random(0.95, 1.05));
+
+    // Each blob is a fixed dot cloud — random offsets within radius, stored once
+    var dots = [];
+    var numDots = max(6, floor(r * 1.8));
+    for (var d = 0; d < numDots; d++) {
+      var da = random(TWO_PI);
+      var dr = sqrt(random()) * r * 0.92; // uniform disk distribution
+      var c  = random(1);
+      dots.push({
+        ox:  cos(da) * dr,
+        oy:  sin(da) * dr,
+        col: c < 0.42 ? 0 : c < 0.84 ? 1 : 2, // 0=blue 1=red 2=white
+        sz:  random(1.2, 4.0),
+        a:   random(160, 255)
+      });
     }
-    var blueAng = random(TWO_PI), blueRad = random(0.42, 0.72);
-    var redAng  = random(TWO_PI), redRad  = random(0.42, 0.72);
+
     pebbles.push({
-      x: cx + cos(ang) * dist_from_center,
-      y: cy + sin(ang) * dist_from_center - WATCH_R * 0.3,
+      x:  cx + cos(ang) * dist_from_center,
+      y:  cy + sin(ang) * dist_from_center - WATCH_R * 0.3,
       vx: random(-0.5, 0.5),
       vy: random(0, 1),
-      r: r,
-      verts: numVerts,
-      offsets: offsets,
-      // Color centers pushed toward the blob rim — backlit glow
-      blueOffX: cos(blueAng) * blueRad, blueOffY: sin(blueAng) * blueRad,
-      redOffX:  cos(redAng)  * redRad,  redOffY:  sin(redAng)  * redRad
+      r:  r,
+      dots: dots
     });
   }
 
@@ -176,59 +182,25 @@ function draw() {
   //   blue pool  — large radial at blueOff
   //   red pool   — large radial at redOff
   //   white shine — tight radial at shineOff
-  // Drawn in ADD mode clipped to the blob shape, so they scatter and
-  // overlap differently in every drop. Vignette pass darkens edges.
+  // Each physics blob renders as a dot cloud — no gradients, no shapes.
+  // ADD blending: overlapping dots sum toward white; sparse areas stay blue/red.
+  blendMode(ADD);
   noStroke();
-  fill(0, 0, 0, 0); // transparent: forces p5 to build the path, no black base
 
   for (var i = 0; i < pebbles.length; i++) {
     var p = pebbles[i];
-    var f  = 1.0 + pulseFlash * 0.5;
-    var bl = ~~min(255, 155 * f);
-    var cr = ~~min(255, 210 * f);
-    var r2 = p.r * 2, r4 = p.r * 4; // reused below
-
-    // Build blob path (p5 fills black, path stays live)
-    beginShape();
-    for (var v = 0; v < p.verts; v++) {
-      var a = TWO_PI * v / p.verts;
-      var rr = p.r * p.offsets[v];
-      curveVertex(round(p.x + cos(a) * rr), round(p.y + sin(a) * rr));
+    var f = 1.0 + pulseFlash * 1.8;
+    for (var d = 0; d < p.dots.length; d++) {
+      var dt = p.dots[d];
+      var alpha = min(255, dt.a * f);
+      if (dt.col === 0)      fill(0,   min(255, 160*f), 255, alpha);
+      else if (dt.col === 1) fill(min(255, 220*f), 25, 55, alpha);
+      else                   fill(min(255, 230*f), min(255, 215*f), 255, alpha);
+      ellipse(p.x + dt.ox, p.y + dt.oy, dt.sz, dt.sz);
     }
-    for (var v = 0; v < 3; v++) {
-      var a = TWO_PI * v / p.verts;
-      var rr = p.r * p.offsets[v];
-      curveVertex(round(p.x + cos(a) * rr), round(p.y + sin(a) * rr));
-    }
-    endShape();
-
-    // Clip to this blob, paint scattered color patches in ADD mode
-    drawingContext.save();
-    drawingContext.clip();
-    drawingContext.globalCompositeOperation = 'lighter';
-
-    // Inverted gradients: dark inner core → bright at blob boundary.
-    // Each center is slightly offset so blue dominates one side of the rim,
-    // red the other — the glow comes from the edge inward, not center outward.
-    var bCx = p.x + p.blueOffX * p.r * 0.25;
-    var bCy = p.y + p.blueOffY * p.r * 0.25;
-    var bg = drawingContext.createRadialGradient(bCx, bCy, p.r * 0.38, bCx, bCy, p.r * 1.02);
-    bg.addColorStop(0, 'rgba(0,0,0,0)');
-    bg.addColorStop(1, 'rgb(15,' + bl + ',255)');
-    drawingContext.fillStyle = bg;
-    drawingContext.fillRect(p.x - r2, p.y - r2, r4, r4);
-
-    var rCx = p.x + p.redOffX * p.r * 0.25;
-    var rCy = p.y + p.redOffY * p.r * 0.25;
-    var rg = drawingContext.createRadialGradient(rCx, rCy, p.r * 0.38, rCx, rCy, p.r * 1.02);
-    rg.addColorStop(0, 'rgba(0,0,0,0)');
-    rg.addColorStop(1, 'rgb(' + cr + ',20,52)');
-    drawingContext.fillStyle = rg;
-    drawingContext.fillRect(p.x - r2, p.y - r2, r4, r4);
-
-    // Restore: removes clip, resets composite to source-over
-    drawingContext.restore();
   }
+
+  blendMode(BLEND);
 
   // ── BEAT FLASH — ADD mode on top of blobs, brightens whole face ──
   if (screenFlash > 0) {
