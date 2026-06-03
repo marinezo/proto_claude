@@ -12,18 +12,6 @@ var cx, cy;
 var WATCH_R = 200;
 var NUM_PEBBLES = 90;
 
-// ── BLOB GLOW / FEATHER ── tune these to adjust the look ────────
-//   Each blob is drawn as 4 concentric spline layers (outermost first).
-//   scale = how much bigger than the blob radius each layer is.
-//   alpha = opacity of that layer (ADD blending — layers sum up).
-var GLOW_LAYERS = [
-  { scale: 2.4, alpha: 5  },   // wide outer feather
-  { scale: 1.7, alpha: 14 },   // mid feather
-  { scale: 1.25, alpha: 32 },  // inner feather
-  { scale: 1.0,  alpha: 78 },  // solid body
-];
-var GLOW_CORE_ALPHA = 150;     // bright white-hot core intensity
-
 // Pulse
 var freeDots = [];        // dots that escaped from blobs on beat
 var MAX_FREE_DOTS = 800;
@@ -54,11 +42,22 @@ function setup() {
     var ang = random(TWO_PI);
     var dist_from_center = random(0, WATCH_R - r - 2);
 
-    // organic blob shape: random vertex offsets, fixed per-pebble forever
-    var numVerts = floor(random(10, 15));
-    var offsets = [];
-    for (var v = 0; v < numVerts; v++) {
-      offsets.push(random(0.78, 1.22));
+    var dots = [];
+    var numDots = max(60, floor(r * 7));
+    for (var d = 0; d < numDots; d++) {
+      var da = random(TWO_PI);
+      // bimodal: half fill interior uniformly, half concentrate at rim
+      var dr = random(1) < 0.5
+        ? r * sqrt(random())          // uniform area fill
+        : r * pow(random(), 0.22);    // rim concentration
+      var c = random(1);
+      dots.push({
+        ox:  cos(da) * dr,
+        oy:  sin(da) * dr,
+        col: c < 0.42 ? 0 : c < 0.84 ? 1 : 2,  // 0=blue, 1=red, 2=white
+        sz:  random(0.8, 1.8),
+        a:   random(140, 230)
+      });
     }
 
     pebbles.push({
@@ -67,9 +66,7 @@ function setup() {
       vx: random(-0.5, 0.5),
       vy: random(0, 1),
       r:  r,
-      verts:   numVerts,
-      offsets: offsets,
-      mainCol: floor(random(2))  // 0=blue dominant, 1=red dominant
+      dots: dots
     });
   }
 
@@ -89,17 +86,16 @@ function physicsTick(isPulse) {
       // shed a few particle dots on each beat
       var shed = floor(random(2, 6));
       for (var s = 0; s < shed; s++) {
-        var da = random(TWO_PI);
-        var dr = random(p.r);
+        var dt = p.dots[floor(random(p.dots.length))];
         freeDots.push({
-          x:   p.x + cos(da) * dr,
-          y:   p.y + sin(da) * dr,
+          x:   p.x + dt.ox,
+          y:   p.y + dt.oy,
           vx:  p.vx + random(-2, 2),
           vy:  p.vy + random(-2, 1),
           grav: random(-0.14, 0.08),
-          col: random(1) < 0.5 ? 0 : 1,
-          sz:  random(0.8, 2.2),
-          a:   random(160, 255)
+          col: dt.col,
+          sz:  dt.sz,
+          a:   dt.a
         });
       }
     }
@@ -223,10 +219,9 @@ function draw() {
   drawingContext.arc(cx, cy, WATCH_R - 1, 0, Math.PI * 2);
   drawingContext.clip();
 
-  // ── PEBBLES ───────────────────────────────────────────────
-  // Each blob is drawn as 4 feather layers (outer→inner) using the same
-  // curveVertex spline shape scaled up/down. ADD blending means outer
-  // halos add softly and inner body is bright. Edit GLOW_LAYERS at top.
+  // ── PEBBLES — tricolor 1px dot cloud ─────────────────────
+  // Each blob is a scatter of blue/red/white points in ADD blending.
+  // Interior dots (sqrt distribution) give body; rim dots (pow 0.22) give edge.
   blendMode(ADD);
   noStroke();
 
@@ -234,26 +229,23 @@ function draw() {
 
   for (var i = 0; i < pebbles.length; i++) {
     var p = pebbles[i];
-    var cr = p.mainCol === 0 ? 0             : min(255, 220*f);
-    var cg = p.mainCol === 0 ? min(255,130*f): 20;
-    var cb = p.mainCol === 0 ? 255           : 50;
-
-    for (var L = 0; L < GLOW_LAYERS.length; L++) {
-      fill(cr, cg, cb, GLOW_LAYERS[L].alpha);
-      blobSpline(p, GLOW_LAYERS[L].scale);
+    for (var d = 0; d < p.dots.length; d++) {
+      var dt = p.dots[d];
+      var alpha = min(255, dt.a * f);
+      if      (dt.col === 0) fill(0,              min(255, 160*f), 255,            alpha);
+      else if (dt.col === 1) fill(min(255, 220*f), 25,             55,             alpha);
+      else                   fill(min(255, 230*f), min(255, 215*f), 255,           alpha);
+      ellipse(p.x + dt.ox, p.y + dt.oy, dt.sz, dt.sz);
     }
-
-    // white-hot core — small tight version of same shape
-    fill(min(255, 230*f), min(255, 215*f), 255, GLOW_CORE_ALPHA);
-    blobSpline(p, 0.42);
   }
 
-  // free particle dots shed on beat
+  // free dots shed on beat
   for (var i = 0; i < freeDots.length; i++) {
     var fd = freeDots[i];
     var alpha = min(255, fd.a * f);
-    if (fd.col === 0) fill(0, min(255, 160*f), 255, alpha);
-    else              fill(min(255, 220*f), 25, 55, alpha);
+    if      (fd.col === 0) fill(0,              min(255, 160*f), 255,  alpha);
+    else if (fd.col === 1) fill(min(255, 220*f), 25,             55,   alpha);
+    else                   fill(min(255, 230*f), min(255, 215*f), 255, alpha);
     ellipse(fd.x, fd.y, fd.sz, fd.sz);
   }
 
@@ -318,24 +310,6 @@ function draw() {
   textFont('monospace');
   textAlign(CENTER, BOTTOM);
   text('SPACE / TAP to pulse', width / 2, height - 16);
-}
-
-// ── BLOB SPLINE ──────────────────────────────────────────────────
-// Draws pebble p's organic shape scaled by `scale` using curveVertex.
-function blobSpline(p, scale) {
-  beginShape();
-  for (var v = 0; v < p.verts; v++) {
-    var a  = TWO_PI * v / p.verts;
-    var rr = p.r * p.offsets[v] * scale;
-    curveVertex(p.x + cos(a) * rr, p.y + sin(a) * rr);
-  }
-  // wrap first 3 verts to close Catmull-Rom spline smoothly
-  for (var v = 0; v < 3; v++) {
-    var a  = TWO_PI * v / p.verts;
-    var rr = p.r * p.offsets[v] * scale;
-    curveVertex(p.x + cos(a) * rr, p.y + sin(a) * rr);
-  }
-  endShape();
 }
 
 // ── PULSE ───────────────────────────────────────────────────────
