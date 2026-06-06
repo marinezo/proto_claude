@@ -411,6 +411,28 @@ function gotDevices(deviceInfos) {
     if (frontIndex !== -1) currentDeviceIndex = frontIndex;
     startCamera(devices[currentDeviceIndex].deviceId);
 
+    var camOn = true;
+
+    var toggleBtn = createButton('Cam OFF');
+    toggleBtn.position(20, height - 80);
+    toggleBtn.style('font-family', 'monospace');
+    toggleBtn.style('font-weight', 'bold');
+    toggleBtn.style('color', '#f55');
+    toggleBtn.style('background', '#111');
+    toggleBtn.style('border', '1px solid #333');
+    toggleBtn.mousePressed(function() {
+      if (camOn) {
+        if (video) { video.stop(); video.hide(); }
+        toggleBtn.html('Cam ON');
+        toggleBtn.style('color', '#5f5');
+      } else {
+        startCamera(devices[currentDeviceIndex].deviceId);
+        toggleBtn.html('Cam OFF');
+        toggleBtn.style('color', '#f55');
+      }
+      camOn = !camOn;
+    });
+
     var btn = createButton('Switch Cam');
     btn.position(20, height - 40);
     btn.style('font-family', 'monospace');
