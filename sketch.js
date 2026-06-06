@@ -46,10 +46,7 @@ function setup() {
     var numDots = max(60, floor(r * 7));
     for (var d = 0; d < numDots; d++) {
       var da = random(TWO_PI);
-      // bimodal: half fill interior uniformly, half concentrate at rim
-      var dr = random(1) < 0.5
-        ? r * sqrt(random())          // uniform area fill
-        : r * pow(random(), 0.22);    // rim concentration
+      var dr = random(1) < 0.5 ? r * sqrt(random()) : r * pow(random(), 0.22);
       var c = random(1);
       dots.push({
         ox:  cos(da) * dr,
