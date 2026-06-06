@@ -225,7 +225,7 @@ function draw() {
   blendMode(ADD);
   noStroke();
 
-  var f = 1.0 + pulseFlash * 1.8;
+  var f = 1.0 + pulseFlash * 0.2;
 
   for (var i = 0; i < pebbles.length; i++) {
     var p = pebbles[i];
@@ -256,7 +256,7 @@ function draw() {
     blendMode(ADD);
     var sf = screenFlash;
     var flash = drawingContext.createRadialGradient(cx, cy, 0, cx, cy, WATCH_R);
-    flash.addColorStop(0,    'rgba(255,255,255,' + (sf * 0.55).toFixed(3) + ')');
+    flash.addColorStop(0,    'rgba(255,255,255,' + (sf * 0.3).toFixed(3) + ')');
     flash.addColorStop(0.35, 'rgba(180,120,255,' + (sf * 0.30).toFixed(3) + ')');
     flash.addColorStop(0.70, 'rgba(0,80,200,'    + (sf * 0.12).toFixed(3) + ')');
     flash.addColorStop(1,    'rgba(0,0,0,0)');
