@@ -400,30 +400,31 @@ function setupButtons() {
     btn.style('border', '1px solid #333');
   };
 
-  var toggleBtn = createButton('Cam OFF');
+  var toggleBtn = createButton('📷 Cam ON');
   toggleBtn.position(20, height - 80);
   btnStyle(toggleBtn);
-  toggleBtn.style('color', '#f55');
+  toggleBtn.style('color', '#5f5');
   toggleBtn.mousePressed(function() {
     camOn = !camOn;
     if (!camOn) {
       if (video) { video.stop(); video.hide(); }
-      toggleBtn.html('Cam ON');
-      toggleBtn.style('color', '#5f5');
+      toggleBtn.html('📷 Cam OFF');
+      toggleBtn.style('color', '#f55');
     } else {
       startCamera();
-      toggleBtn.html('Cam OFF');
-      toggleBtn.style('color', '#f55');
+      toggleBtn.html('📷 Cam ON');
+      toggleBtn.style('color', '#5f5');
     }
   });
 
-  var switchBtn = createButton('Switch Cam');
+  var switchBtn = createButton('⟳ Rear Cam');
   switchBtn.position(20, height - 40);
   btnStyle(switchBtn);
   switchBtn.style('color', '#aaa');
   switchBtn.mousePressed(function() {
     facingMode = (facingMode === 'environment') ? 'user' : 'environment';
     startCamera();
+    switchBtn.html('⟳ ' + (facingMode === 'environment' ? 'Rear Cam' : 'Front Cam'));
   });
 }
 
