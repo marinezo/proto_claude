@@ -1,11 +1,3 @@
-/* PROJECT: Pebbles
-   THEME: Sensory Transducer / Somatic Calibrator
-   AESTHETIC: Black bg, luminous additive-blend drops (Apple Watch Blood O2 ref)
-   - Colorful blob pebbles with gravity physics
-   - Pulse launches them upward, they settle back down
-   - Completely still when no input
-*/
-
 var video;
 var pebbles = [];
 var cx, cy;
@@ -13,23 +5,23 @@ var WATCH_R = 200;
 var NUM_PEBBLES = 90;
 
 // Pulse
-var freeDots = [];        // dots that escaped from blobs on beat
+var freeDots = [];
 var MAX_FREE_DOTS = 800;
 var readings = [];
 var maxReadings = 20;
 var lastBeatTime = 0;
 var beatThreshold = 1.5;
 var indicatorFill = 0;
-var pulseFlash  = 0;  // slow decay — brightens drops on beat
-var screenFlash = 0;  // fast decay — white bloom across the watch face
+var pulseFlash  = 0;
+var screenFlash = 0;
 var bpm = 0;
 var bpmHistory = [];
 var lastPulseMs = 0;
 var manualPulse = false;
 
 // Camera
-var devices = [];
-var currentDeviceIndex = 0;
+var facingMode = 'environment'; // rear camera for pulse detection
+var camOn = true;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -51,7 +43,7 @@ function setup() {
       dots.push({
         ox:  cos(da) * dr,
         oy:  sin(da) * dr,
-        col: c < 0.42 ? 0 : c < 0.84 ? 1 : 2,  // 0=blue, 1=red, 2=white
+        col: c < 0.42 ? 0 : c < 0.84 ? 1 : 2,
         sz:  random(0.8, 1.8),
         a:   random(140, 230)
       });
@@ -67,7 +59,8 @@ function setup() {
     });
   }
 
-  getVideoDevices();
+  startCamera();
+  setupButtons();
 }
 
 function physicsTick(isPulse) {
@@ -80,7 +73,6 @@ function physicsTick(isPulse) {
       var p = pebbles[i];
       p.vx += random(-3, 3);
       p.vy += random(-12, -6);
-      // shed a few particle dots on each beat
       var shed = floor(random(2, 6));
       for (var s = 0; s < shed; s++) {
         var dt = p.dots[floor(random(p.dots.length))];
@@ -100,11 +92,10 @@ function physicsTick(isPulse) {
       freeDots.splice(0, freeDots.length - MAX_FREE_DOTS);
   }
 
-  // free dot physics — gravity + circular boundary
   for (var i = 0; i < freeDots.length; i++) {
     var fd = freeDots[i];
-    fd.vy += fd.grav;                 // per-dot gravity: neg = up, pos = down
-    fd.vx += random(-0.04, 0.04);    // gentle horizontal wobble
+    fd.vy += fd.grav;
+    fd.vx += random(-0.04, 0.04);
     fd.x  += fd.vx;
     fd.y  += fd.vy;
     fd.vx *= 0.90;
@@ -138,7 +129,6 @@ function physicsTick(isPulse) {
     }
   }
 
-  // pebble-to-pebble collisions
   for (var i = 0; i < pebbles.length; i++) {
     for (var j = i + 1; j < pebbles.length; j++) {
       var a = pebbles[i];
@@ -168,7 +158,6 @@ function physicsTick(isPulse) {
     }
   }
 
-  // boundary: keep inside circle
   for (var i = 0; i < pebbles.length; i++) {
     var p = pebbles[i];
     var dx = p.x - cx;
@@ -194,7 +183,6 @@ function draw() {
 
   var now = millis();
 
-  // ── SIGNAL ────────────────────────────────────────────────
   var rawSignal = getPulseStrength();
   var boostedSignal = rawSignal * 4;
   var isPulse = manualPulse || (boostedSignal > beatThreshold && now - lastBeatTime > 300);
@@ -210,18 +198,13 @@ function draw() {
   screenFlash   = max(0, screenFlash   - 0.07);
   indicatorFill = max(0, indicatorFill - 0.03);
 
-  // ── PHYSICS ───────────────────────────────────────────────
   physicsTick(isPulse);
 
-  // ── CLIP TO WATCH CIRCLE ──────────────────────────────────
   drawingContext.save();
   drawingContext.beginPath();
   drawingContext.arc(cx, cy, WATCH_R - 1, 0, Math.PI * 2);
   drawingContext.clip();
 
-  // ── PEBBLES — tricolor 1px dot cloud ─────────────────────
-  // Each blob is a scatter of blue/red/white points in ADD blending.
-  // Interior dots (sqrt distribution) give body; rim dots (pow 0.22) give edge.
   blendMode(ADD);
   noStroke();
 
@@ -232,26 +215,24 @@ function draw() {
     for (var d = 0; d < p.dots.length; d++) {
       var dt = p.dots[d];
       var alpha = min(255, dt.a * f);
-      if      (dt.col === 0) fill(0,              min(255, 160*f), 255,            alpha);
-      else if (dt.col === 1) fill(min(255, 220*f), 25,             55,             alpha);
-      else                   fill(min(255, 230*f), min(255, 215*f), 255,           alpha);
+      if      (dt.col === 0) fill(0,               min(255, 160*f), 255,           alpha);
+      else if (dt.col === 1) fill(min(255, 220*f),  25,             55,            alpha);
+      else                   fill(min(255, 230*f),  min(255, 215*f), 255,          alpha);
       ellipse(p.x + dt.ox, p.y + dt.oy, dt.sz, dt.sz);
     }
   }
 
-  // free dots shed on beat
   for (var i = 0; i < freeDots.length; i++) {
     var fd = freeDots[i];
     var alpha = min(255, fd.a * f);
-    if      (fd.col === 0) fill(0,              min(255, 160*f), 255,  alpha);
-    else if (fd.col === 1) fill(min(255, 220*f), 25,             55,   alpha);
-    else                   fill(min(255, 230*f), min(255, 215*f), 255, alpha);
+    if      (fd.col === 0) fill(0,               min(255, 160*f), 255,  alpha);
+    else if (fd.col === 1) fill(min(255, 220*f),  25,             55,   alpha);
+    else                   fill(min(255, 230*f),  min(255, 215*f), 255, alpha);
     ellipse(fd.x, fd.y, fd.sz, fd.sz);
   }
 
   blendMode(BLEND);
 
-  // ── BEAT FLASH — ADD mode on top of blobs, brightens whole face ──
   if (screenFlash > 0) {
     blendMode(ADD);
     var sf = screenFlash;
@@ -267,7 +248,6 @@ function draw() {
     blendMode(BLEND);
   }
 
-  // ── HEART + BPM ───────────────────────────────────────────
   var heartY = WATCH_R * 0.62;
   drawPixelHeart(cx - 24, cy + heartY, 10);
 
@@ -281,13 +261,11 @@ function draw() {
 
   drawingContext.restore();
 
-  // ── WATCH RING ────────────────────────────────────────────
   noFill();
   stroke(50);
   strokeWeight(1);
   ellipse(cx, cy, WATCH_R * 2, WATCH_R * 2);
 
-  // ── INDICATOR DOT ─────────────────────────────────────────
   var indX = cx - WATCH_R - 30;
   var indY = cy - WATCH_R - 30;
   noStroke();
@@ -303,13 +281,12 @@ function draw() {
     ellipse(indX, indY, 18, 18);
   }
 
-  // ── INSTRUCTIONS ──────────────────────────────────────────
   noStroke();
   fill(80);
   textSize(10);
   textFont('monospace');
   textAlign(CENTER, BOTTOM);
-  text('SPACE / TAP to pulse', width / 2, height - 16);
+  text('TAP to pulse', width / 2, height - 16);
 }
 
 // ── PULSE ───────────────────────────────────────────────────────
@@ -323,7 +300,7 @@ function registerPulse() {
       if (bpmHistory.length > 6) bpmHistory.shift();
       var sum = 0;
       for (var i = 0; i < bpmHistory.length; i++) sum += bpmHistory[i];
-      bpm = constrain(round(sum / bpmHistory.length), 55, 130);
+      bpm = constrain(round(sum / bpmHistory.length), 40, 200);
     }
   }
   lastPulseMs = now;
@@ -337,7 +314,16 @@ function keyPressed() {
 }
 
 function mousePressed() {
+  // ignore clicks on buttons (they sit in bottom-left corner)
+  if (mouseX < 120 && mouseY > height - 100) return;
   registerPulse();
+}
+
+function touchStarted() {
+  // ignore taps on buttons
+  if (touches.length > 0 && touches[0].x < 120 && touches[0].y > height - 100) return;
+  registerPulse();
+  return false; // prevent default scroll/zoom
 }
 
 // ── PIXEL HEART ─────────────────────────────────────────────────
@@ -366,21 +352,24 @@ function drawPixelHeart(px, py, s) {
 // ── CAMERA PULSE DETECTION ──────────────────────────────────────
 
 function getPulseStrength() {
-  if (!video || !video.pixels) return 0;
+  if (!video || !video.pixels || !camOn) return 0;
   video.loadPixels();
+  if (!video.pixels.length) return 0;
   var rSum = 0;
   var count = 0;
-  var sx = floor(video.width / 2 - 10);
-  var sy = floor(video.height / 2 - 10);
-  for (var x = sx; x < sx + 20; x++) {
-    for (var y = sy; y < sy + 20; y++) {
-      var i = (x + y * video.width) * 4;
-      if (video.pixels[i]) { rSum += video.pixels[i]; count++; }
+  var sx = floor(video.width / 2 - 15);
+  var sy = floor(video.height / 2 - 15);
+  for (var x = sx; x < sx + 30; x++) {
+    for (var y = sy; y < sy + 30; y++) {
+      var idx = (x + y * video.width) * 4;
+      rSum += video.pixels[idx];
+      count++;
     }
   }
   var currentR = count > 0 ? rSum / count : 0;
+  // require red to dominate (finger over lens)
   var ci = (floor(video.width / 2) + floor(video.height / 2) * video.width) * 4;
-  if (video.pixels[ci] < video.pixels[ci + 1] + 10) return 0;
+  if (video.pixels[ci] < video.pixels[ci + 1] + 5) return 0;
   readings.push(currentR);
   if (readings.length > maxReadings) readings.shift();
   if (readings.length < 5) return 0;
@@ -392,73 +381,50 @@ function getPulseStrength() {
 
 // ── CAMERA SETUP ────────────────────────────────────────────────
 
-function getVideoDevices() {
-  if (navigator.mediaDevices) {
-    navigator.mediaDevices.enumerateDevices().then(gotDevices);
-  }
-}
-
-function gotDevices(deviceInfos) {
-  devices = [];
-  for (var i = 0; i < deviceInfos.length; i++) {
-    if (deviceInfos[i].kind === 'videoinput') devices.push(deviceInfos[i]);
-  }
-  if (devices.length > 0) {
-    var frontIndex = -1;
-    for (var i = 0; i < devices.length; i++) {
-      if (devices[i].label.toLowerCase().indexOf('front') !== -1) {
-        frontIndex = i;
-        break;
-      }
-    }
-    if (frontIndex !== -1) currentDeviceIndex = frontIndex;
-    startCamera(devices[currentDeviceIndex].deviceId);
-
-    var camOn = true;
-
-    var toggleBtn = createButton('Cam OFF');
-    toggleBtn.position(20, height - 80);
-    toggleBtn.style('font-family', 'monospace');
-    toggleBtn.style('font-weight', 'bold');
-    toggleBtn.style('color', '#f55');
-    toggleBtn.style('background', '#111');
-    toggleBtn.style('border', '1px solid #333');
-    toggleBtn.mousePressed(function() {
-      if (camOn) {
-        if (video) { video.stop(); video.hide(); }
-        toggleBtn.html('Cam ON');
-        toggleBtn.style('color', '#5f5');
-      } else {
-        startCamera(devices[currentDeviceIndex].deviceId);
-        toggleBtn.html('Cam OFF');
-        toggleBtn.style('color', '#f55');
-      }
-      camOn = !camOn;
-    });
-
-    var btn = createButton('Switch Cam');
-    btn.position(20, height - 40);
-    btn.style('font-family', 'monospace');
-    btn.style('font-weight', 'bold');
-    btn.style('color', '#aaa');
-    btn.style('background', '#111');
-    btn.style('border', '1px solid #333');
-    btn.mousePressed(function() {
-      currentDeviceIndex = (currentDeviceIndex + 1) % devices.length;
-      startCamera(devices[currentDeviceIndex].deviceId);
-    });
-  }
-}
-
-function startCamera(id) {
+function startCamera() {
   if (video) video.remove();
   video = createCapture({
-    video: { deviceId: { exact: id }, width: 320, height: 240 },
+    video: { facingMode: facingMode, width: 320, height: 240 },
     audio: false
   });
   video.size(320, 240);
   video.elt.setAttribute('playsinline', '');
   video.hide();
+}
+
+function setupButtons() {
+  var btnStyle = function(btn) {
+    btn.style('font-family', 'monospace');
+    btn.style('font-weight', 'bold');
+    btn.style('background', '#111');
+    btn.style('border', '1px solid #333');
+  };
+
+  var toggleBtn = createButton('Cam OFF');
+  toggleBtn.position(20, height - 80);
+  btnStyle(toggleBtn);
+  toggleBtn.style('color', '#f55');
+  toggleBtn.mousePressed(function() {
+    camOn = !camOn;
+    if (!camOn) {
+      if (video) { video.stop(); video.hide(); }
+      toggleBtn.html('Cam ON');
+      toggleBtn.style('color', '#5f5');
+    } else {
+      startCamera();
+      toggleBtn.html('Cam OFF');
+      toggleBtn.style('color', '#f55');
+    }
+  });
+
+  var switchBtn = createButton('Switch Cam');
+  switchBtn.position(20, height - 40);
+  btnStyle(switchBtn);
+  switchBtn.style('color', '#aaa');
+  switchBtn.mousePressed(function() {
+    facingMode = (facingMode === 'environment') ? 'user' : 'environment';
+    startCamera();
+  });
 }
 
 function windowResized() {
