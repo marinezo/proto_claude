@@ -124,7 +124,10 @@ function physicsTick(isPulse) {
 
   for (var i = 0; i < pebbles.length; i++) {
     var p = pebbles[i];
-    p.vy += GRAVITY;
+    var dx = p.x - cx, dy = p.y - cy;
+    var distToCenter = sqrt(dx*dx + dy*dy);
+    var grounded = distToCenter > (WATCH_R - p.r - 1) * 0.96 && abs(p.vx) < 1.5 && abs(p.vy) < 1.5;
+    if (!grounded) p.vy += GRAVITY;
     p.x += p.vx;
     p.y += p.vy;
     p.vx *= DAMPING;
