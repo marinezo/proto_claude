@@ -3,7 +3,7 @@ var video;
 // Wave / line visuals
 var NUM_LAYERS = 5;
 var layers = [];
-var history = [];        // recorded peak amplitude per frame, scrolls across screen
+var waveHistory = [];        // recorded peak amplitude per frame, scrolls across screen
 var MAX_HISTORY = 0;     // set in setup based on width
 var baseAmp = 26;
 var peakBoost = 0;       // decays each frame, spikes the line on a pulse
@@ -32,7 +32,7 @@ function setup() {
   colorMode(HSB, 360, 100, 100, 100);
 
   MAX_HISTORY = floor(width / 4);
-  for (var i = 0; i < MAX_HISTORY; i++) history.push(0);
+  for (var i = 0; i < MAX_HISTORY; i++) waveHistory.push(0);
 
   for (var i = 0; i < NUM_LAYERS; i++) {
     layers.push({
@@ -74,9 +74,9 @@ function draw() {
 
   hueShift = (hueShift + 0.6) % 360;
 
-  // record current peak amplitude and scroll history rightward
-  history.push(baseAmp * (1 + peakBoost * 2.2));
-  if (history.length > MAX_HISTORY) history.shift();
+  // record current peak amplitude and scroll waveHistory rightward
+  waveHistory.push(baseAmp * (1 + peakBoost * 2.2));
+  if (waveHistory.length > MAX_HISTORY) waveHistory.shift();
 
   drawTrippyWaves(now);
 
@@ -147,9 +147,9 @@ function drawTrippyWaves(now) {
 
       beginShape();
       for (var x = 0; x <= width; x += 6) {
-        var hi = floor(map(x, 0, width, 0, history.length - 1));
-        hi = constrain(hi, 0, history.length - 1);
-        var amp = history[hi] * lay.ampMul;
+        var hi = floor(map(x, 0, width, 0, waveHistory.length - 1));
+        hi = constrain(hi, 0, waveHistory.length - 1);
+        var amp = waveHistory[hi] * lay.ampMul;
 
         var wob = sin(x * lay.freq + now * lay.speed + lay.phase) * amp;
         wob += sin(x * lay.freq * 2.3 - now * lay.speed * 1.7 + lay.phase * 1.5) * amp * 0.35;
@@ -295,6 +295,6 @@ function setupButtons() {
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   MAX_HISTORY = floor(width / 4);
-  while (history.length < MAX_HISTORY) history.unshift(0);
-  while (history.length > MAX_HISTORY) history.shift();
+  while (waveHistory.length < MAX_HISTORY) waveHistory.unshift(0);
+  while (waveHistory.length > MAX_HISTORY) waveHistory.shift();
 }
