@@ -127,60 +127,78 @@ function draw() {
   text('TAP to pulse', width / 2, height - 16);
 }
 
+function waveY(lay, xc, now) {
+  var hi = floor(map(xc, 0, width, 0, waveHistory.length - 1));
+  hi = constrain(hi, 0, waveHistory.length - 1);
+  var amp = (smoothAmp * 0.5 + waveHistory[hi] * 0.5) * lay.ampMul;
+
+  var wob = sin(xc * lay.freq + now * lay.speed + lay.phase) * amp;
+  wob += sin(xc * lay.freq * 0.45 - now * lay.speed * 0.55 + lay.phase * 1.7) * amp * 0.5;
+  wob += sin(xc * lay.freq * 0.2 + now * lay.speed * 0.3 + lay.phase * 0.6) * amp * 0.3;
+
+  // organic high-frequency grain via noise (turbulent ink edges, not a clean sine)
+  wob += (noise(xc * 0.01, lay.phase, now * 0.00012) - 0.5) * amp * 0.6;
+
+  return wob;
+}
+
 function drawTrippyWaves(now) {
   var midY = height / 2;
   var f = 1.0 + pulseFlash * 0.18;
 
-  noFill();
-  strokeCap(ROUND);
-  strokeJoin(ROUND);
+  noStroke();
   blendMode(MULTIPLY);
+
+  var STRANDS = 16;
+  var step = 14;
 
   for (var L = 0; L < layers.length; L++) {
     var lay = layers[L];
-    var weight = lay.weight * f;
     var c = color(lay.col);
+    var baseW = lay.weight * f;
 
-    // soft watercolor bleed: layered translucent washes, widest+faintest first
-    for (var pass = 3; pass >= 1; pass--) {
-      strokeWeight(weight * (0.55 + pass * 0.4));
-      var a = 28 + (3 - pass) * 26;
-      stroke(red(c), green(c), blue(c), a);
-      drawCurvedWave(lay, midY, now, pass * 3);
+    for (var s = 0; s < STRANDS; s++) {
+      // each strand: a thin organic ribbon offset from the core line,
+      // with its own noise seed so edges fray independently like wet pigment
+      var seed = lay.phase * 13.7 + s * 91.3;
+      var off  = map(s, 0, STRANDS - 1, -1, 1) * baseW * 0.5;
+      var alpha = map(abs(s - (STRANDS - 1) / 2), 0, (STRANDS - 1) / 2, 34, 6);
+
+      fill(red(c), green(c), blue(c), alpha);
+
+      beginShape();
+      var pts = [];
+      for (var x = -step; x <= width + step; x += step) {
+        var xc = constrain(x, 0, width);
+        var w = waveY(lay, xc, now);
+        var n = (noise(xc * 0.018, seed, now * 0.0002) - 0.5) * baseW * 0.9;
+        pts.push({ x: x, y: midY + lay.yOff + w + off + n });
+      }
+      curveVertex(pts[0].x, pts[0].y);
+      for (var i = 0; i < pts.length; i++) curveVertex(pts[i].x, pts[i].y);
+      curveVertex(pts[pts.length - 1].x, pts[pts.length - 1].y);
+      endShape();
     }
 
-    // slightly darker pigment-edge core
-    strokeWeight(weight * 0.5);
-    stroke(red(c) * 0.75, green(c) * 0.75, blue(c) * 0.75, 70);
-    drawCurvedWave(lay, midY, now, 0);
+    // a darker, drier "pigment edge" line tracing the core path
+    noFill();
+    stroke(red(c) * 0.7, green(c) * 0.7, blue(c) * 0.7, 50);
+    strokeWeight(1.4);
+    beginShape();
+    var pts2 = [];
+    for (var x2 = -step; x2 <= width + step; x2 += step) {
+      var xc2 = constrain(x2, 0, width);
+      var w2 = waveY(lay, xc2, now);
+      pts2.push({ x: x2, y: midY + lay.yOff + w2 });
+    }
+    curveVertex(pts2[0].x, pts2[0].y);
+    for (var j = 0; j < pts2.length; j++) curveVertex(pts2[j].x, pts2[j].y);
+    curveVertex(pts2[pts2.length - 1].x, pts2[pts2.length - 1].y);
+    endShape();
+    noStroke();
   }
 
   blendMode(BLEND);
-}
-
-function drawCurvedWave(lay, midY, now, jitter) {
-  jitter = jitter || 0;
-  var step = 22;
-  var pts = [];
-  for (var x = -step; x <= width + step; x += step) {
-    var xc = constrain(x, 0, width);
-    var hi = floor(map(xc, 0, width, 0, waveHistory.length - 1));
-    hi = constrain(hi, 0, waveHistory.length - 1);
-    var amp = (smoothAmp * 0.5 + waveHistory[hi] * 0.5) * lay.ampMul;
-
-    var wob = sin(xc * lay.freq + now * lay.speed + lay.phase) * amp;
-    wob += sin(xc * lay.freq * 0.45 - now * lay.speed * 0.55 + lay.phase * 1.7) * amp * 0.5;
-    wob += sin(xc * lay.freq * 0.2 + now * lay.speed * 0.3 + lay.phase * 0.6) * amp * 0.3;
-    if (jitter) wob += sin(xc * 0.05 + lay.phase * 3 + jitter) * jitter;
-
-    pts.push({ x: x, y: midY + lay.yOff + wob });
-  }
-
-  beginShape();
-  curveVertex(pts[0].x, pts[0].y);
-  for (var i = 0; i < pts.length; i++) curveVertex(pts[i].x, pts[i].y);
-  curveVertex(pts[pts.length - 1].x, pts[pts.length - 1].y);
-  endShape();
 }
 
 function registerPulse() {
