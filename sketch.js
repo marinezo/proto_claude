@@ -1,12 +1,14 @@
 var video;
 
-// Wave / line visuals
-var NUM_LAYERS = 5;
-var layers = [];
-var waveHistory = [];        // recorded peak amplitude per frame, scrolls across screen
-var MAX_HISTORY = 0;     // set in setup based on width
-var baseAmp = 26;
-var peakBoost = 0;       // decays each frame, spikes the line on a pulse
+// Dreamy blob / thread visuals
+var PALETTE = ['#fdd302', '#118c4b', '#ff79be', '#706bad', '#0273b7', '#601f3f',
+               '#7fd9c4', '#9b6bd6', '#ff9b54', '#5f7fd6'];
+var BG_COLOR = '#F5F1EA';
+var blobs = [];
+var threads = [];
+var NUM_BLOBS = 26;
+var NUM_THREADS = 38;
+var peakBoost = 0;       // decays each frame, spikes visuals on a pulse
 
 // Pulse
 var readings = [];
@@ -24,32 +26,46 @@ var manualPulse = false;
 var facingMode = 'environment';
 var camOn = true;
 
-var PALETTE = ['#fdd302', '#118c4b', '#ff79be', '#706bad', '#0273b7', '#601f3f'];
-var BG_COLOR = '#FBF7F5';
-var smoothAmp = 0;
-
 function setup() {
   createCanvas(windowWidth, windowHeight);
   colorMode(RGB, 255, 255, 255, 255);
 
-  MAX_HISTORY = floor(width / 4);
-  for (var i = 0; i < MAX_HISTORY; i++) waveHistory.push(0);
-
-  NUM_LAYERS = PALETTE.length;
-  for (var i = 0; i < NUM_LAYERS; i++) {
-    layers.push({
-      col:    PALETTE[i],
-      speed:  random(0.0012, 0.0025),
-      freq:   random(0.0009, 0.0018),
-      phase:  random(TWO_PI),
-      ampMul: map(i, 0, NUM_LAYERS - 1, 0.6, 1.25),
-      yOff:   map(i, 0, NUM_LAYERS - 1, -1, 1) * (height * 0.16),
-      weight: width * 0.045
-    });
-  }
+  for (var i = 0; i < NUM_BLOBS; i++) blobs.push(makeBlob());
+  for (var i = 0; i < NUM_THREADS; i++) threads.push(makeThread());
 
   startCamera();
   setupButtons();
+}
+
+function makeBlob() {
+  return {
+    x: random(width),
+    y: random(height),
+    r: random(40, 130),
+    col: color(random(PALETTE)),
+    driftX: random(-0.12, 0.12),
+    driftY: random(-0.12, 0.12),
+    phase: random(TWO_PI),
+    pulseSpeed: random(0.004, 0.012),
+    baseAlpha: random(60, 110)
+  };
+}
+
+function makeThread() {
+  var x = random(width);
+  var y = random(height);
+  var len = random(40, 220);
+  var ang = random(TWO_PI);
+  return {
+    x: x,
+    y: y,
+    ex: x + cos(ang) * len,
+    ey: y + sin(ang) * len,
+    driftX: random(-0.05, 0.05),
+    driftY: random(-0.05, 0.05),
+    col: color(random([0, 30, 60])),
+    weight: random(0.6, 1.2)
+  };
 }
 
 function draw() {
@@ -70,21 +86,16 @@ function draw() {
 
   pulseFlash    = max(0, pulseFlash    - 0.035);
   indicatorFill = max(0, indicatorFill - 0.03);
-  peakBoost     = max(0, peakBoost     - 0.045);
+  peakBoost     = max(0, peakBoost     - 0.02);
 
-  // record current peak amplitude and scroll waveHistory rightward
-  waveHistory.push(baseAmp * (1 + peakBoost * 6));
-  if (waveHistory.length > MAX_HISTORY) waveHistory.shift();
-
-  smoothAmp += (waveHistory[waveHistory.length - 1] - smoothAmp) * 0.04;
-
-  drawTrippyWaves(now);
+  drawBlobs(now);
+  drawThreads();
 
   var heartX = 36;
   var heartY = height - 36;
   drawPixelHeart(heartX, heartY, 10);
 
-  fill(40, 35, 35);
+  fill(70, 60, 55);
   noStroke();
   textAlign(LEFT, CENTER);
   textSize(16);
@@ -101,64 +112,68 @@ function draw() {
     fill(96, 31, 63, 200);
     ellipse(indX, indY, 12, 12);
   } else {
-    stroke(120);
+    stroke(180, 170, 160);
     strokeWeight(1);
     noFill();
     ellipse(indX, indY, 18, 18);
   }
 
   noStroke();
-  fill(120);
+  fill(150, 140, 130);
   textSize(10);
   textFont('monospace');
   textAlign(CENTER, BOTTOM);
   text('TAP to pulse', width / 2, height - 16);
 }
 
-function drawTrippyWaves(now) {
-  var midY = height / 2;
-  var f = 1.0 + pulseFlash * 0.18;
+function drawBlobs(now) {
+  noStroke();
+  drawingContext.save();
+  drawingContext.filter = 'blur(' + (width * 0.018) + 'px)';
 
-  noFill();
-  strokeCap(ROUND);
-  strokeJoin(ROUND);
+  for (var i = 0; i < blobs.length; i++) {
+    var b = blobs[i];
+    b.x += b.driftX * (1 + peakBoost * 3);
+    b.y += b.driftY * (1 + peakBoost * 3);
 
-  for (var L = 0; L < layers.length; L++) {
-    var lay = layers[L];
-    var weight = lay.weight * f;
-    var c = color(lay.col);
+    if (b.x < -b.r) b.x = width + b.r;
+    if (b.x > width + b.r) b.x = -b.r;
+    if (b.y < -b.r) b.y = height + b.r;
+    if (b.y > height + b.r) b.y = -b.r;
 
-    strokeWeight(weight);
-    stroke(red(c), green(c), blue(c), 235);
-    drawCurvedWave(lay, midY, now);
+    var pulseR = b.r * (1 + sin(now * b.pulseSpeed + b.phase) * 0.08 + peakBoost * 0.55);
+    var a = b.baseAlpha * (1 + peakBoost * 0.9);
 
-    strokeWeight(1);
-    stroke(0);
-    drawCurvedWave(lay, midY, now);
+    fill(red(b.col), green(b.col), blue(b.col), min(255, a));
+    ellipse(b.x, b.y, pulseR * 2, pulseR * 2);
   }
+
+  drawingContext.restore();
 }
 
-function drawCurvedWave(lay, midY, now) {
-  var step = 22;
-  var pts = [];
-  for (var x = -step; x <= width + step; x += step) {
-    var xc = constrain(x, 0, width);
-    var hi = floor(map(xc, 0, width, 0, waveHistory.length - 1));
-    hi = constrain(hi, 0, waveHistory.length - 1);
-    var amp = (smoothAmp * 0.5 + waveHistory[hi] * 0.5) * lay.ampMul;
+function drawThreads() {
+  for (var i = 0; i < threads.length; i++) {
+    var t = threads[i];
+    var dx = t.driftX * (1 + peakBoost * 4);
+    var dy = t.driftY * (1 + peakBoost * 4);
+    t.x += dx; t.y += dy;
+    t.ex += dx; t.ey += dy;
 
-    var wob = sin(xc * lay.freq + now * lay.speed + lay.phase) * amp;
-    wob += sin(xc * lay.freq * 0.45 - now * lay.speed * 0.55 + lay.phase * 1.7) * amp * 0.5;
-    wob += sin(xc * lay.freq * 0.2 + now * lay.speed * 0.3 + lay.phase * 0.6) * amp * 0.3;
+    var w = width + 200;
+    var h = height + 200;
+    if (t.x < -100) { t.x += w; t.ex += w; }
+    if (t.x > width + 100) { t.x -= w; t.ex -= w; }
+    if (t.y < -100) { t.y += h; t.ey += h; }
+    if (t.y > height + 100) { t.y -= h; t.ey -= h; }
 
-    pts.push({ x: x, y: midY + lay.yOff + wob });
+    stroke(red(t.col), green(t.col), blue(t.col), 110);
+    strokeWeight(t.weight);
+    line(t.x, t.y, t.ex, t.ey);
+
+    noStroke();
+    fill(red(t.col), green(t.col), blue(t.col), 200);
+    ellipse(t.x, t.y, 4.5, 4.5);
   }
-
-  beginShape();
-  curveVertex(pts[0].x, pts[0].y);
-  for (var i = 0; i < pts.length; i++) curveVertex(pts[i].x, pts[i].y);
-  curveVertex(pts[pts.length - 1].x, pts[pts.length - 1].y);
-  endShape();
 }
 
 function registerPulse() {
