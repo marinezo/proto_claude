@@ -15,7 +15,6 @@ var lastBeatTime = 0;
 var beatThreshold = 1.5;
 var indicatorFill = 0;
 var pulseFlash  = 0;
-var screenFlash = 0;
 var bpm = 0;
 var bpmHistory = [];
 var lastPulseMs = 0;
@@ -25,24 +24,27 @@ var manualPulse = false;
 var facingMode = 'environment';
 var camOn = true;
 
-var hueShift = 0;
+var PALETTE = ['#fdd302', '#118c4b', '#ff79be', '#706bad', '#0273b7', '#601f3f'];
+var BG_COLOR = '#FBF7F5';
+var smoothAmp = 0;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  colorMode(HSB, 360, 100, 100, 100);
+  colorMode(RGB, 255, 255, 255, 255);
 
   MAX_HISTORY = floor(width / 4);
   for (var i = 0; i < MAX_HISTORY; i++) waveHistory.push(0);
 
+  NUM_LAYERS = PALETTE.length;
   for (var i = 0; i < NUM_LAYERS; i++) {
     layers.push({
-      hue:    (i * 360 / NUM_LAYERS),
-      speed:  random(0.015, 0.05),
-      freq:   random(0.006, 0.018),
+      col:    PALETTE[i],
+      speed:  random(0.0035, 0.007),
+      freq:   random(0.0018, 0.0035),
       phase:  random(TWO_PI),
-      ampMul: map(i, 0, NUM_LAYERS - 1, 0.5, 1.3),
-      yOff:   map(i, 0, NUM_LAYERS - 1, -1, 1) * (height * 0.06),
-      weight: random(2, 5)
+      ampMul: map(i, 0, NUM_LAYERS - 1, 0.6, 1.2),
+      yOff:   map(i, 0, NUM_LAYERS - 1, -1, 1) * (height * 0.16),
+      weight: width * 0.05
     });
   }
 
@@ -51,7 +53,7 @@ function setup() {
 }
 
 function draw() {
-  background(0, 0, 6);
+  background(BG_COLOR);
 
   var now = millis();
 
@@ -63,35 +65,20 @@ function draw() {
     lastBeatTime = now;
     indicatorFill = 1;
     pulseFlash  = 1.0;
-    screenFlash = 1.0;
     peakBoost = 1.0;
   }
 
   pulseFlash    = max(0, pulseFlash    - 0.035);
-  screenFlash   = max(0, screenFlash   - 0.07);
   indicatorFill = max(0, indicatorFill - 0.03);
   peakBoost     = max(0, peakBoost     - 0.045);
-
-  hueShift = (hueShift + 0.6) % 360;
 
   // record current peak amplitude and scroll waveHistory rightward
   waveHistory.push(baseAmp * (1 + peakBoost * 2.2));
   if (waveHistory.length > MAX_HISTORY) waveHistory.shift();
 
-  drawTrippyWaves(now);
+  smoothAmp += (waveHistory[waveHistory.length - 1] - smoothAmp) * 0.04;
 
-  if (screenFlash > 0) {
-    blendMode(ADD);
-    var sf = screenFlash;
-    var flash = drawingContext.createRadialGradient(width/2, height/2, 0, width/2, height/2, max(width, height) * 0.7);
-    flash.addColorStop(0,    'hsla(' + hueShift + ', 100%, 70%, ' + (sf * 0.35).toFixed(3) + ')');
-    flash.addColorStop(0.4,  'hsla(' + ((hueShift + 120) % 360) + ', 100%, 60%, ' + (sf * 0.22).toFixed(3) + ')');
-    flash.addColorStop(0.75, 'hsla(' + ((hueShift + 240) % 360) + ', 100%, 50%, ' + (sf * 0.10).toFixed(3) + ')');
-    flash.addColorStop(1,    'rgba(0,0,0,0)');
-    drawingContext.fillStyle = flash;
-    drawingContext.fillRect(0, 0, width, height);
-    blendMode(BLEND);
-  }
+  drawTrippyWaves(now);
 
   var heartX = 36;
   var heartY = height - 36;
@@ -130,38 +117,31 @@ function draw() {
 
 function drawTrippyWaves(now) {
   var midY = height / 2;
-  var f = 1.0 + pulseFlash * 0.25;
+  var f = 1.0 + pulseFlash * 0.18;
 
-  blendMode(ADD);
   noFill();
+  strokeCap(ROUND);
+  strokeJoin(ROUND);
 
   for (var L = 0; L < layers.length; L++) {
     var lay = layers[L];
-    var hue = (lay.hue + hueShift) % 360;
+    strokeWeight(lay.weight * f);
+    var c = color(lay.col);
+    stroke(red(c), green(c), blue(c), 235);
 
-    for (var pass = 0; pass < 2; pass++) {
-      var weight = lay.weight + (pass === 0 ? 0 : 0);
-      strokeWeight(weight - pass * 1.5);
-      var alpha = (pass === 0 ? 28 : 70) * f;
-      stroke(hue, 75, 100, alpha);
+    beginShape();
+    for (var x = 0; x <= width; x += 8) {
+      var hi = floor(map(x, 0, width, 0, waveHistory.length - 1));
+      hi = constrain(hi, 0, waveHistory.length - 1);
+      var amp = (smoothAmp * 0.5 + waveHistory[hi] * 0.5) * lay.ampMul;
 
-      beginShape();
-      for (var x = 0; x <= width; x += 6) {
-        var hi = floor(map(x, 0, width, 0, waveHistory.length - 1));
-        hi = constrain(hi, 0, waveHistory.length - 1);
-        var amp = waveHistory[hi] * lay.ampMul;
+      var wob = sin(x * lay.freq + now * lay.speed + lay.phase) * amp;
 
-        var wob = sin(x * lay.freq + now * lay.speed + lay.phase) * amp;
-        wob += sin(x * lay.freq * 2.3 - now * lay.speed * 1.7 + lay.phase * 1.5) * amp * 0.35;
-
-        var y = midY + lay.yOff + wob;
-        vertex(x, y);
-      }
-      endShape();
+      var y = midY + lay.yOff + wob;
+      vertex(x, y);
     }
+    endShape();
   }
-
-  blendMode(BLEND);
 }
 
 function registerPulse() {
