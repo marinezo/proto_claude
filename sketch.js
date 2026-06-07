@@ -93,7 +93,7 @@ function draw() {
   drawTrippyWaves(now);
 
   var heartX = 36;
-  var heartY = height - 36;
+  var heartY = 36;
   drawPixelHeart(heartX, heartY, 10);
 
   fill(40, 35, 35);
