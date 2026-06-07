@@ -24,11 +24,9 @@ var manualPulse = false;
 var facingMode = 'environment';
 var camOn = true;
 
-var PALETTE = ['#ff2e97', '#7b2ff7', '#00e5ff', '#ff6ec7', '#5b34eb', '#ff9f1c'];
-var BG_TOP = '#1b0f3a';
-var BG_BOTTOM = '#3a0f4a';
+var PALETTE = ['#fdd302', '#118c4b', '#ff79be', '#706bad', '#0273b7', '#601f3f'];
+var BG_COLOR = '#FBF7F5';
 var smoothAmp = 0;
-var bgGradient = null;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -41,8 +39,8 @@ function setup() {
   for (var i = 0; i < NUM_LAYERS; i++) {
     layers.push({
       col:    PALETTE[i],
-      speed:  random(0.0015, 0.0032),
-      freq:   random(0.001, 0.002),
+      speed:  random(0.0012, 0.0025),
+      freq:   random(0.0009, 0.0018),
       phase:  random(TWO_PI),
       ampMul: map(i, 0, NUM_LAYERS - 1, 0.6, 1.25),
       yOff:   map(i, 0, NUM_LAYERS - 1, -1, 1) * (height * 0.16),
@@ -50,19 +48,12 @@ function setup() {
     });
   }
 
-  bgGradient = drawingContext.createLinearGradient(0, 0, 0, height);
-  bgGradient.addColorStop(0, BG_TOP);
-  bgGradient.addColorStop(1, BG_BOTTOM);
-
   startCamera();
   setupButtons();
 }
 
 function draw() {
-  drawingContext.fillStyle = bgGradient;
-  drawingContext.fillRect(0, 0, width, height);
-
-  drawScanlines();
+  background(BG_COLOR);
 
   var now = millis();
 
@@ -82,7 +73,7 @@ function draw() {
   peakBoost     = max(0, peakBoost     - 0.045);
 
   // record current peak amplitude and scroll waveHistory rightward
-  waveHistory.push(baseAmp * (1 + peakBoost * 4.2));
+  waveHistory.push(baseAmp * (1 + peakBoost * 6));
   if (waveHistory.length > MAX_HISTORY) waveHistory.shift();
 
   smoothAmp += (waveHistory[waveHistory.length - 1] - smoothAmp) * 0.04;
@@ -93,7 +84,7 @@ function draw() {
   var heartY = height - 36;
   drawPixelHeart(heartX, heartY, 10);
 
-  fill(0, 229, 255);
+  fill(40, 35, 35);
   noStroke();
   textAlign(LEFT, CENTER);
   textSize(16);
@@ -105,63 +96,44 @@ function draw() {
   var indY = 40;
   noStroke();
   if (indicatorFill > 0.5) {
-    fill(255, 46, 151, 65);
+    fill(96, 31, 63, 65);
     ellipse(indX, indY, 28, 28);
-    fill(255, 46, 151, 220);
+    fill(96, 31, 63, 200);
     ellipse(indX, indY, 12, 12);
   } else {
-    stroke(123, 47, 247);
+    stroke(120);
     strokeWeight(1);
     noFill();
     ellipse(indX, indY, 18, 18);
   }
 
   noStroke();
-  fill(123, 47, 247);
+  fill(120);
   textSize(10);
   textFont('monospace');
   textAlign(CENTER, BOTTOM);
   text('TAP to pulse', width / 2, height - 16);
 }
 
-function drawScanlines() {
-  var ctx = drawingContext;
-  ctx.save();
-  ctx.globalAlpha = 0.05;
-  ctx.fillStyle = '#00e5ff';
-  for (var y = 0; y < height; y += 4) {
-    ctx.fillRect(0, y, width, 1);
-  }
-  ctx.restore();
-}
-
 function drawTrippyWaves(now) {
   var midY = height / 2;
-  var f = 1.0 + pulseFlash * 0.22;
+  var f = 1.0 + pulseFlash * 0.18;
 
   noFill();
   strokeCap(ROUND);
   strokeJoin(ROUND);
 
-  var ctx = drawingContext;
-
   for (var L = 0; L < layers.length; L++) {
     var lay = layers[L];
-    var c = color(lay.col);
     var weight = lay.weight * f;
+    var c = color(lay.col);
 
-    // soft neon glow pass
-    ctx.save();
-    ctx.shadowColor = lay.col;
-    ctx.shadowBlur = weight * 1.6;
     strokeWeight(weight);
-    stroke(red(c), green(c), blue(c), 215);
+    stroke(red(c), green(c), blue(c), 235);
     drawCurvedWave(lay, midY, now);
-    ctx.restore();
 
-    // crisp bright core
-    strokeWeight(weight * 0.4);
-    stroke(255, 255, 255, 90);
+    strokeWeight(1);
+    stroke(0);
     drawCurvedWave(lay, midY, now);
   }
 }
@@ -176,7 +148,8 @@ function drawCurvedWave(lay, midY, now) {
     var amp = (smoothAmp * 0.5 + waveHistory[hi] * 0.5) * lay.ampMul;
 
     var wob = sin(xc * lay.freq + now * lay.speed + lay.phase) * amp;
-    wob += sin(xc * lay.freq * 0.5 - now * lay.speed * 0.6 + lay.phase * 1.7) * amp * 0.4;
+    wob += sin(xc * lay.freq * 0.45 - now * lay.speed * 0.55 + lay.phase * 1.7) * amp * 0.5;
+    wob += sin(xc * lay.freq * 0.2 + now * lay.speed * 0.3 + lay.phase * 0.6) * amp * 0.3;
 
     pts.push({ x: x, y: midY + lay.yOff + wob });
   }
@@ -232,7 +205,7 @@ function drawPixelHeart(px, py, s) {
   ];
   var ps = max(1, floor(s / 5));
   noStroke();
-  fill(255, 46, 151);
+  fill(96, 31, 63);
   for (var row = 0; row < grid.length; row++) {
     for (var col = 0; col < grid[row].length; col++) {
       if (grid[row][col]) {
