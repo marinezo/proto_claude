@@ -306,7 +306,4 @@ function setupButtons() {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  MAX_HISTORY = floor(width / 4);
-  while (waveHistory.length < MAX_HISTORY) waveHistory.unshift(0);
-  while (waveHistory.length > MAX_HISTORY) waveHistory.shift();
 }
