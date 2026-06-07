@@ -84,7 +84,7 @@ function draw() {
   var heartY = height - 36;
   drawPixelHeart(heartX, heartY, 10);
 
-  fill(0, 0, 100);
+  fill(40, 35, 35);
   noStroke();
   textAlign(LEFT, CENTER);
   textSize(16);
@@ -96,19 +96,19 @@ function draw() {
   var indY = 40;
   noStroke();
   if (indicatorFill > 0.5) {
-    fill(350, 80, 100, 65);
+    fill(96, 31, 63, 65);
     ellipse(indX, indY, 28, 28);
-    fill(350, 80, 100, 95);
+    fill(96, 31, 63, 200);
     ellipse(indX, indY, 12, 12);
   } else {
-    stroke(0, 0, 35);
+    stroke(120);
     strokeWeight(1);
     noFill();
     ellipse(indX, indY, 18, 18);
   }
 
   noStroke();
-  fill(0, 0, 45);
+  fill(120);
   textSize(10);
   textFont('monospace');
   textAlign(CENTER, BOTTOM);
@@ -188,7 +188,7 @@ function drawPixelHeart(px, py, s) {
   ];
   var ps = max(1, floor(s / 5));
   noStroke();
-  fill(345, 80, 85);
+  fill(96, 31, 63);
   for (var row = 0; row < grid.length; row++) {
     for (var col = 0; col < grid[row].length; col++) {
       if (grid[row][col]) {
@@ -244,7 +244,7 @@ function setupButtons() {
     btn.style('border', '1px solid #333');
   };
 
-  var toggleBtn = createButton('📷 Cam ON');
+  var toggleBtn = createButton('Cam ON');
   toggleBtn.position(20, height - 80);
   btnStyle(toggleBtn);
   toggleBtn.style('color', '#5f5');
@@ -252,23 +252,23 @@ function setupButtons() {
     camOn = !camOn;
     if (!camOn) {
       if (video) { video.stop(); video.hide(); }
-      toggleBtn.html('📷 Cam OFF');
+      toggleBtn.html('Cam OFF');
       toggleBtn.style('color', '#f55');
     } else {
       startCamera();
-      toggleBtn.html('📷 Cam ON');
+      toggleBtn.html('Cam ON');
       toggleBtn.style('color', '#5f5');
     }
   });
 
-  var switchBtn = createButton('⟳ Rear Cam');
+  var switchBtn = createButton('Rear Cam');
   switchBtn.position(20, height - 40);
   btnStyle(switchBtn);
   switchBtn.style('color', '#aaa');
   switchBtn.mousePressed(function() {
     facingMode = (facingMode === 'environment') ? 'user' : 'environment';
     startCamera();
-    switchBtn.html('⟳ ' + (facingMode === 'environment' ? 'Rear Cam' : 'Front Cam'));
+    switchBtn.html('' + (facingMode === 'environment' ? 'Rear Cam' : 'Front Cam'));
   });
 }
 
