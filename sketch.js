@@ -55,6 +55,7 @@ function setup() {
       vx: random(-0.5, 0.5),
       vy: random(0, 1),
       r:  r,
+      grav: 0.15 + (r / 25) * 0.35,
       dots: dots
     });
   }
@@ -64,9 +65,9 @@ function setup() {
 }
 
 function physicsTick(isPulse) {
-  var GRAVITY = 0.15;
   var DAMPING = 0.85;
   var STOP_THRESHOLD = 0.1;
+  var BOTTOM_ZONE = cy + WATCH_R / 3;
 
   if (isPulse) {
     for (var i = 0; i < pebbles.length; i++) {
@@ -117,13 +118,16 @@ function physicsTick(isPulse) {
     var p = pebbles[i];
     var dx = p.x - cx, dy = p.y - cy;
     var distToCenter = sqrt(dx*dx + dy*dy);
+    var inBottomZone = p.y > BOTTOM_ZONE;
     var grounded = distToCenter > (WATCH_R - p.r - 1) * 0.99 && abs(p.vx) < 0.5 && abs(p.vy) < 0.5 && p.y > cy;
-    if (!grounded) p.vy += GRAVITY;
+    if (!grounded) p.vy += p.grav;
     p.x += p.vx;
     p.y += p.vy;
-    p.vx *= DAMPING;
-    p.vy *= DAMPING;
-    if (abs(p.vx) < STOP_THRESHOLD && abs(p.vy) < STOP_THRESHOLD) {
+    var localDamping = inBottomZone ? 0.7 : DAMPING;
+    p.vx *= localDamping;
+    p.vy *= localDamping;
+    var localStop = inBottomZone ? 0.3 : STOP_THRESHOLD;
+    if (abs(p.vx) < localStop && abs(p.vy) < localStop) {
       p.vx = 0;
       p.vy = 0;
     }
@@ -149,10 +153,12 @@ function physicsTick(isPulse) {
         var relVy = a.vy - b.vy;
         var dot = relVx * nx + relVy * ny;
         if (dot > 0) {
-          a.vx -= nx * dot * 0.5;
-          a.vy -= ny * dot * 0.5;
-          b.vx += nx * dot * 0.5;
-          b.vy += ny * dot * 0.5;
+          var inZone = (a.y > BOTTOM_ZONE || b.y > BOTTOM_ZONE);
+          var resp = inZone ? 0.2 : 0.5;
+          a.vx -= nx * dot * resp;
+          a.vy -= ny * dot * resp;
+          b.vx += nx * dot * resp;
+          b.vy += ny * dot * resp;
         }
       }
     }
