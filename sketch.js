@@ -38,12 +38,39 @@ var bloomSlots = [];
 var windEnergy    = 0.1;
 var windNoiseTime = 0;
 
+// ── PETAL STIPPLE DOTS ──────────────────────────────────────────
+// Samples points inside the unit petal silhouette (the same kite
+// shape drawn by drawPetal at size=1) so dot positions can be
+// cached once and rescaled/rotated per petal at draw time.
+function samplePetalDotsUnit(count) {
+  var A = { x: 0, y: 0 };
+  var B = { x: 1.8, y: 1.5 };
+  var C = { x: 1.53, y: 0 };
+  var D = { x: 1.8, y: -1.5 };
+  var dots = [];
+  for (var i = 0; i < count; i++) {
+    var top = random() < 0.5;
+    var p2 = top ? B : C;
+    var p3 = top ? C : D;
+    var a = random(), b = random();
+    if (a + b > 1) { a = 1 - a; b = 1 - b; }
+    dots.push({
+      ox: A.x + a * (p2.x - A.x) + b * (p3.x - A.x),
+      oy: A.y + a * (p2.y - A.y) + b * (p3.y - A.y),
+      sz: random(0.8, 1.6),
+      a:  random(150, 255)
+    });
+  }
+  return dots;
+}
+
 // ── PETAL IN A FLOWER ───────────────────────────────────────────
-function createFlowerPetal(ang) {
+function createFlowerPetal(ang, size) {
   return {
     localAng: ang,
     alive: true,
-    noiseSeed: random(1000)
+    noiseSeed: random(1000),
+    dots: samplePetalDotsUnit(max(5, floor(size * 1.3)))
   };
 }
 
@@ -51,7 +78,7 @@ function createFlowerPetal(ang) {
 function createFlower(x, y, size) {
   var petals = [];
   for (var p = 0; p < 5; p++) {
-    petals.push(createFlowerPetal(TWO_PI * p / 5));
+    petals.push(createFlowerPetal(TWO_PI * p / 5, size));
   }
   return {
     x: x, y: y,
@@ -78,7 +105,8 @@ function createFallenPetal(x, y, size, ang) {
     spin: random(-0.005, 0.005),
     noiseSeed: random(1000),
     bornAt: millis(),
-    opacity: 1
+    opacity: 1,
+    dots: samplePetalDotsUnit(max(5, floor(size * 1.3)))
   };
 }
 
@@ -114,13 +142,15 @@ BranchSegment.prototype.display = function() {
 
 // ── LOOSE PETAL ───────────────────────────────────────────
 function createLoosePetal(x, y) {
+  var sz = random(5, 9);
   return {
     x: x, y: y,
     homeX: x, homeY: y,
-    size: random(5, 9),
+    size: sz,
     angle: random(TWO_PI),
     noiseSeed: random(1000),
-    alive: true
+    alive: true,
+    dots: samplePetalDotsUnit(max(5, floor(sz * 1.3)))
   };
 }
 
@@ -475,9 +505,9 @@ function draw() {
       var tx = (noise(lp.noiseSeed + t * 2) - 0.5) * TREMBLE_AMP * .5 * pulseEnvelope;
       var ty = (noise(lp.noiseSeed + 10 + t * 20) - 0.5) * TREMBLE_AMP * .5 * pulseEnvelope;
       var rot = (noise(lp.noiseSeed + 888 + t * 25) - 0.5) * .8 * pulseEnvelope;
-      drawPetal(lp.homeX + tx, lp.homeY + ty, lp.size, lp.angle + rot);
+      drawPetal(lp.homeX + tx, lp.homeY + ty, lp.size, lp.angle + rot, lp.dots);
     } else {
-      drawPetal(lp.homeX, lp.homeY, lp.size, lp.angle);
+      drawPetal(lp.homeX, lp.homeY, lp.size, lp.angle, lp.dots);
     }
   }
 
@@ -547,7 +577,7 @@ function drawFlower(fl, t, scale) {
     var petalAng = a + fl.petals[p].localAng;
     var pcx = px + cos(petalAng) * s * 0.35;
     var pcy = py + sin(petalAng) * s * 0.35;
-    drawPetal(pcx, pcy, s, petalAng);
+    drawPetal(pcx, pcy, s, petalAng, fl.petals[p].dots);
   }
 
   // centre dot (stamen)
@@ -566,7 +596,7 @@ function drawFallenPetal(fp, t) {
     drawingContext.globalAlpha = max(0, fp.opacity);
   }
 
-  drawPetal(fp.x, fp.y, fp.size, a);
+  drawPetal(fp.x, fp.y, fp.size, a, fp.dots);
 
   if (fp.opacity < 1) {
     drawingContext.globalAlpha = 1;
@@ -574,7 +604,7 @@ function drawFallenPetal(fp, t) {
 }
 
 // ── SINGLE PETAL ────────────────────────────────────────────────
-function drawPetal(px, py, size, ang) {
+function drawPetal(px, py, size, ang, dots) {
   var len = size * 1.8;
   var w   = size * 1;
 
@@ -616,6 +646,20 @@ function drawPetal(px, py, size, ang) {
   vertex(round(tipX - perpX * 1.5), round(tipY - perpY * 1.5));
   quadraticVertex(round(c2x), round(c2y), round(px), round(py));
   endShape();
+
+  // stippled interior: red dots scattered inside the petal outline
+  if (dots) {
+    var cosA = cos(ang), sinA = sin(ang);
+    noStroke();
+    for (var i = 0; i < dots.length; i++) {
+      var dt = dots[i];
+      var lx = dt.ox * size, ly = dt.oy * size;
+      var wx = lx * cosA - ly * sinA;
+      var wy = lx * sinA + ly * cosA;
+      fill(220, 25, 55, dt.a);
+      ellipse(px + wx, py + wy, dt.sz, dt.sz);
+    }
+  }
 }
 
 // ── PIXEL HEART ─────────────────────────────────────────────────
