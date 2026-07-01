@@ -500,32 +500,34 @@ function draw() {
   drawingContext.arc(0, 0, WATCH_R - 1, 0, TWO_PI);
   drawingContext.clip();
 
-  // ── GRADIENT CLOCK FACE (centred glow, thick black rim) ──
-  // Centred radial glow: light tints of the Pebbles red + blue in the
-  // middle, fading early to a thick black rim.
-  var gx = 0, gy = 0;
-  bgGradient = drawingContext.createRadialGradient(
-    gx, gy, WATCH_R * 0.02,
-    gx, gy, WATCH_R * 0.95
+  // ── GRADIENT CLOCK FACE (top->bottom, thick black rim) ──
+  // Vertical gradient: thick black rim top & bottom, light tints of the
+  // Pebbles red + blue through the middle band (top=red, bottom=blue).
+  bgGradient = drawingContext.createLinearGradient(
+    0, -WATCH_R,   // top
+    0,  WATCH_R    // bottom  (same x = vertical)
   );
-  bgGradient.addColorStop(0.00, 'rgb(255, 150, 170)');  // light red core
-  bgGradient.addColorStop(0.35, 'rgb(150, 185, 255)');  // light blue
-  bgGradient.addColorStop(0.62, 'rgb(45, 45, 95)');     // dark indigo
-  bgGradient.addColorStop(0.80, 'rgb(0, 0, 0)');        // black...
-  bgGradient.addColorStop(1.00, 'rgb(0, 0, 0)');        // ...thick black rim
+  bgGradient.addColorStop(0.00, 'rgb(0, 0, 0)');        // black...
+  bgGradient.addColorStop(0.18, 'rgb(0, 0, 0)');        // ...thick top rim
+  bgGradient.addColorStop(0.38, 'rgb(255, 150, 170)');  // light red
+  bgGradient.addColorStop(0.62, 'rgb(150, 185, 255)');  // light blue
+  bgGradient.addColorStop(0.82, 'rgb(0, 0, 0)');        // black...
+  bgGradient.addColorStop(1.00, 'rgb(0, 0, 0)');        // ...thick bottom rim
   drawingContext.fillStyle = bgGradient;
   drawingContext.fillRect(-WATCH_R, -WATCH_R, WATCH_R * 2, WATCH_R * 2);
 
-  // Petals: brighter build of the same field (never full black) so they
-  // glow in front of the darker surround.
-  petalGradient = drawingContext.createRadialGradient(
-    gx, gy, WATCH_R * 0.02,
-    gx, gy, WATCH_R * 0.95
+  // Petals: brighter build of the same field (indigo, never full black) so
+  // they glow in front of the darker surround.
+  petalGradient = drawingContext.createLinearGradient(
+    0, -WATCH_R,
+    0,  WATCH_R
   );
-  petalGradient.addColorStop(0.00, 'rgb(255, 190, 205)'); // light red
-  petalGradient.addColorStop(0.38, 'rgb(180, 205, 255)'); // light blue
-  petalGradient.addColorStop(0.68, 'rgb(90, 90, 160)');   // indigo
-  petalGradient.addColorStop(1.00, 'rgb(55, 55, 110)');
+  petalGradient.addColorStop(0.00, 'rgb(55, 55, 110)');   // indigo
+  petalGradient.addColorStop(0.18, 'rgb(70, 70, 130)');
+  petalGradient.addColorStop(0.38, 'rgb(255, 190, 205)'); // light red
+  petalGradient.addColorStop(0.62, 'rgb(180, 205, 255)'); // light blue
+  petalGradient.addColorStop(0.82, 'rgb(70, 70, 130)');
+  petalGradient.addColorStop(1.00, 'rgb(55, 55, 110)');   // indigo
 
   // ── BRANCHES ──────────────────────────────────────────────
   for (var i = 0; i < branches.length; i++) {
