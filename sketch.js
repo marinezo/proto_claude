@@ -91,8 +91,8 @@ function BranchSegment(startV, endV, thStart, thEnd) {
 }
 
 BranchSegment.prototype.display = function() {
-  fill(94, 61, 42);
-  stroke(163, 116, 81);
+  fill(255);
+  stroke(255);
   strokeWeight(1);
 
   var dir = p5.Vector.sub(this.end, this.start);
@@ -596,8 +596,8 @@ function drawPetal(px, py, size, ang) {
   var notchX = tipX - cos(ang) * notchDepth;
   var notchY = tipY - sin(ang) * notchDepth;
 
-  fill(255, 200, 214);
-  stroke(219, 68, 107);
+  fill(220, 25, 55);
+  stroke(220, 25, 55);
   strokeWeight(1);
 
   beginShape();
