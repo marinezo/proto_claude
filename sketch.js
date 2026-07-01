@@ -1,11 +1,14 @@
 /* PROJECT: Sakura_Crisp_Fixed_Spin
    THEME: Sensory Transducer
-   PALETTE: Black background, white strokes/dots only. No other colors.
+   PALETTE: Light/white background, black 1px strokes, white petal/branch fill.
+            Petals & branches stay pure black-on-white line art.
+            Color lives ONLY in the dotted "clock face" haze + heartbeat,
+            drawn from the Pebbles palette (crimson + blue) so the two
+            pieces share a colour language despite the light/dark split.
    FIXES:
    - Petals stop spinning when they settle (Damping applied to spin).
    - Ground friction added to rotation.
    - Retains crisp 1px strokes.
-   - Black background with white sakura petals/branches/dots.
 */
 
 var WATCH_R      = 200;
@@ -130,17 +133,24 @@ function createLoosePetal(x, y) {
 }
 
 // ── CLOCK FACE BACKGROUND DOTS ───────────────────────────────────
-// Fixed dotted texture behind the branches/petals. Monochrome:
-// every dot is white; only size and alpha vary to give depth.
+// Fixed dotted texture behind the branches/petals: a soft pink
+// epicenter, a rose/crimson band, and a thin blue ring near the rim.
+// These hues are shared with the Pebbles piece so the series reads as
+// one palette. Tuned as a gentle wash for the light background.
 function generateBgDots() {
   for (var i = 0; i < NUM_BG_DOTS; i++) {
     var r = WATCH_R * sqrt(random());
     var theta = random(TWO_PI);
+    var band;
+    if (r < BG_WHITE_R) band = 'pink';
+    else if (r > BG_BLUE_R) band = 'blue';
+    else band = 'rose';
     bgDots.push({
       x: cos(theta) * r,
       y: sin(theta) * r,
+      band: band,
       sz: random(0.8, 1.8),
-      a: random(120, 220)
+      a: random(50, 130)
     });
   }
 }
@@ -358,7 +368,7 @@ function setup() {
 
 // ── DRAW ────────────────────────────────────────────────────────
 function draw() {
-  background(0);
+  background(255);
 
   var now = millis();
   var t = now * 0.001;
@@ -474,7 +484,7 @@ function draw() {
 
   // ── WATCH CIRCLE ──────────────────────────────────────────
   noFill();
-  stroke(255);
+  stroke(0);
   strokeWeight(1);
   ellipse(0, 0, WATCH_R * 2, WATCH_R * 2);
 
@@ -484,15 +494,16 @@ function draw() {
   drawingContext.arc(0, 0, WATCH_R - 1, 0, TWO_PI);
   drawingContext.clip();
 
-  // ── CLOCK FACE BACKGROUND (white dots only) ───────────────
-  blendMode(ADD);
+  // ── CLOCK FACE BACKGROUND (soft coloured haze) ────────────
+  // Normal blend (not ADD) so the tint shows against the white bg.
   noStroke();
   for (var i = 0; i < bgDots.length; i++) {
     var bd = bgDots[i];
-    fill(255, 255, 255, bd.a);
+    if (bd.band === 'blue') fill(70, 150, 255, bd.a);
+    else if (bd.band === 'rose') fill(225, 70, 105, bd.a);
+    else fill(255, 175, 200, bd.a);
     ellipse(bd.x, bd.y, bd.sz, bd.sz);
   }
-  blendMode(BLEND);
 
   // ── BRANCHES ──────────────────────────────────────────────
   for (var i = 0; i < branches.length; i++) {
@@ -535,7 +546,7 @@ function draw() {
   var heartY = WATCH_R * 0.62;
   drawPixelHeart(-24, heartY, 10);
 
-  fill(255);
+  fill(40);
   noStroke();
   textAlign(LEFT, CENTER);
   textSize(14);
@@ -550,10 +561,10 @@ function draw() {
   // ── INDICATOR DOT ─────────────────────────────────────────
   var indX = cx - WATCH_R - 30;
   var indY = cy - WATCH_R - 30;
-  stroke(255);
+  stroke(0);
   strokeWeight(1);
   if (indicatorFill > 0.5) {
-    fill(255);
+    fill(220, 25, 55);
   } else {
     noFill();
   }
@@ -561,7 +572,7 @@ function draw() {
 
   // ── INSTRUCTIONS ──────────────────────────────────────────
   noStroke();
-  fill(180);
+  fill(120);
   textSize(10);
   textFont('monospace');
   textAlign(CENTER, BOTTOM);
@@ -656,7 +667,7 @@ function drawPixelHeart(px, py, s) {
   ];
   var ps = max(1, floor(s / 5));
   noStroke();
-  fill(255);
+  fill(220, 25, 55);
   for (var row = 0; row < grid.length; row++) {
     for (var col = 0; col < grid[row].length; col++) {
       if (grid[row][col]) {
