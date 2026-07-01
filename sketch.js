@@ -91,7 +91,7 @@ function BranchSegment(startV, endV, thStart, thEnd) {
 }
 
 BranchSegment.prototype.display = function() {
-  fill(255);
+  noFill();
   stroke(255);
   strokeWeight(1);
 
@@ -551,8 +551,9 @@ function drawFlower(fl, t, scale) {
   }
 
   // centre dot (stamen)
-  noStroke();
-  fill(255, 214, 90);
+  noFill();
+  stroke(255, 214, 90);
+  strokeWeight(1);
   var dotS = max(1, floor(s * 0.15));
   rect(round(px) - floor(dotS / 2), round(py) - floor(dotS / 2), dotS, dotS);
 }
@@ -596,7 +597,7 @@ function drawPetal(px, py, size, ang) {
   var notchX = tipX - cos(ang) * notchDepth;
   var notchY = tipY - sin(ang) * notchDepth;
 
-  fill(220, 25, 55);
+  noFill();
   stroke(220, 25, 55);
   strokeWeight(1);
 
