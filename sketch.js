@@ -37,6 +37,10 @@ var lastBloomTime = 0;
 var bloomSlots = [];
 var windEnergy    = 0.1;
 var windNoiseTime = 0;
+var bgDots = [];
+var NUM_BG_DOTS = 1800;
+var BG_WHITE_R = WATCH_R * 0.15;   // inner epicenter
+var BG_BLUE_R  = WATCH_R * 0.94;   // start of the thin outer ring
 
 // ── PETAL IN A FLOWER ───────────────────────────────────────────
 function createFlowerPetal(ang) {
@@ -91,9 +95,9 @@ function BranchSegment(startV, endV, thStart, thEnd) {
 }
 
 BranchSegment.prototype.display = function() {
-  fill(0);
-  stroke(255);
-  strokeWeight(0.6);
+  fill(255);
+  stroke(0);
+  strokeWeight(1);
 
   var dir = p5.Vector.sub(this.end, this.start);
   var perp = createVector(-dir.y, dir.x);
@@ -122,6 +126,28 @@ function createLoosePetal(x, y) {
     noiseSeed: random(1000),
     alive: true
   };
+}
+
+// ── CLOCK FACE BACKGROUND DOTS ───────────────────────────────────
+// Fixed dotted texture behind the branches/petals: a small white
+// epicenter, a red band filling most of the circle, and a thin
+// blue ring near the rim.
+function generateBgDots() {
+  for (var i = 0; i < NUM_BG_DOTS; i++) {
+    var r = WATCH_R * sqrt(random());
+    var theta = random(TWO_PI);
+    var band;
+    if (r < BG_WHITE_R) band = 'white';
+    else if (r > BG_BLUE_R) band = 'blue';
+    else band = 'red';
+    bgDots.push({
+      x: cos(theta) * r,
+      y: sin(theta) * r,
+      band: band,
+      sz: random(0.8, 1.8),
+      a: random(120, 220)
+    });
+  }
 }
 
 // ── BRANCH GENERATION ─────────────────────────────────────────────
@@ -288,6 +314,8 @@ function setup() {
 
   cx = round(width / 2);
   cy = round(height / 2);
+
+  generateBgDots();
 
   // Branch 1
   generateBranch(
@@ -461,6 +489,18 @@ function draw() {
   drawingContext.arc(0, 0, WATCH_R - 1, 0, TWO_PI);
   drawingContext.clip();
 
+  // ── CLOCK FACE BACKGROUND ─────────────────────────────────
+  blendMode(ADD);
+  noStroke();
+  for (var i = 0; i < bgDots.length; i++) {
+    var bd = bgDots[i];
+    if (bd.band === 'blue') fill(60, 140, 255, bd.a);
+    else if (bd.band === 'red') fill(220, 25, 55, bd.a);
+    else fill(255, 255, 255, bd.a);
+    ellipse(bd.x, bd.y, bd.sz, bd.sz);
+  }
+  blendMode(BLEND);
+
   // ── BRANCHES ──────────────────────────────────────────────
   for (var i = 0; i < branches.length; i++) {
     branches[i].display();
@@ -590,30 +630,25 @@ function drawPetal(px, py, size, ang) {
   var notchX = tipX - cos(ang) * notchDepth;
   var notchY = tipY - sin(ang) * notchDepth;
 
-  var tip1x = tipX + perpX * 1.5, tip1y = tipY + perpY * 1.5;
-  var tip2x = tipX - perpX * 1.5, tip2y = tipY - perpY * 1.5;
+  fill(255);
+  stroke(0);
+  strokeWeight(1);
 
-  // red core sits only in the small area nearest the base, then
-  // falls off to black almost immediately so red stays minimal
-  var grad = drawingContext.createRadialGradient(px, py, 0, px, py, len);
-  grad.addColorStop(0,    'rgb(220,25,55)');
-  grad.addColorStop(0.12, 'rgb(220,25,55)');
-  grad.addColorStop(0.3,  'rgb(0,0,0)');
-  grad.addColorStop(1,    'rgb(0,0,0)');
+  beginShape();
+  vertex(round(px), round(py));
+  quadraticVertex(round(c1x), round(c1y), round(tipX + perpX * 1.5), round(tipY + perpY * 1.5));
+  endShape();
 
-  drawingContext.beginPath();
-  drawingContext.moveTo(px, py);
-  drawingContext.quadraticCurveTo(c1x, c1y, tip1x, tip1y);
-  drawingContext.lineTo(notchX, notchY);
-  drawingContext.lineTo(tip2x, tip2y);
-  drawingContext.quadraticCurveTo(c2x, c2y, px, py);
-  drawingContext.closePath();
+  beginShape();
+  vertex(round(tipX + perpX * 1.5), round(tipY + perpY * 1.5));
+  vertex(round(notchX), round(notchY));
+  vertex(round(tipX - perpX * 1.5), round(tipY - perpY * 1.5));
+  endShape();
 
-  drawingContext.fillStyle = grad;
-  drawingContext.fill();
-  drawingContext.strokeStyle = 'rgb(255,255,255)';
-  drawingContext.lineWidth = 0.6;
-  drawingContext.stroke();
+  beginShape();
+  vertex(round(tipX - perpX * 1.5), round(tipY - perpY * 1.5));
+  quadraticVertex(round(c2x), round(c2y), round(px), round(py));
+  endShape();
 }
 
 // ── PIXEL HEART ─────────────────────────────────────────────────
