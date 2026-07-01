@@ -1,10 +1,12 @@
 /* PROJECT: Sakura_Crisp_Fixed_Spin
    THEME: Sensory Transducer
-   PALETTE: Light/white background, black 1px strokes, white petal/branch fill.
-            Petals & branches stay pure black-on-white line art.
-            Color lives ONLY in the dotted "clock face" haze + heartbeat,
-            drawn from the Pebbles palette (crimson + blue) so the two
-            pieces share a colour language despite the light/dark split.
+   PALETTE: One red<->blue gradient (Pebbles' crimson + blue, blending
+            through purple) laid as an offset radial "shape".
+            - Background: that gradient, softened to a pastel so it sits back.
+            - Petals: filled with the SAME gradient at full strength, so the
+              gradient appears to come forward through the petal shapes.
+            - Branches: no fill, black stroke only (bg shows through).
+            - All strokes black, 1px.
    FIXES:
    - Petals stop spinning when they settle (Damping applied to spin).
    - Ground friction added to rotation.
@@ -43,6 +45,7 @@ var windEnergy    = 0.1;
 var windNoiseTime = 0;
 var bgDots = [];
 var NUM_BG_DOTS = 1800;
+var petalGradient = null;     // shared red<->blue gradient, rebuilt each frame
 var BG_WHITE_R = WATCH_R * 0.15;   // inner epicenter
 var BG_BLUE_R  = WATCH_R * 0.94;   // start of the thin outer ring
 
@@ -99,7 +102,7 @@ function BranchSegment(startV, endV, thStart, thEnd) {
 }
 
 BranchSegment.prototype.display = function() {
-  fill(255);
+  noFill();
   stroke(0);
   strokeWeight(1);
 
@@ -320,8 +323,6 @@ function setup() {
   cx = round(width / 2);
   cy = round(height / 2);
 
-  generateBgDots();
-
   // Branch 1
   generateBranch(
     createVector(-WATCH_R * 1.2, WATCH_R * 0.7),
@@ -494,16 +495,25 @@ function draw() {
   drawingContext.arc(0, 0, WATCH_R - 1, 0, TWO_PI);
   drawingContext.clip();
 
-  // ── CLOCK FACE BACKGROUND (soft coloured haze) ────────────
-  // Normal blend (not ADD) so the tint shows against the white bg.
-  noStroke();
-  for (var i = 0; i < bgDots.length; i++) {
-    var bd = bgDots[i];
-    if (bd.band === 'blue') fill(70, 150, 255, bd.a);
-    else if (bd.band === 'rose') fill(225, 70, 105, bd.a);
-    else fill(255, 175, 200, bd.a);
-    ellipse(bd.x, bd.y, bd.sz, bd.sz);
-  }
+  // ── GRADIENT CLOCK FACE ───────────────────────────────────
+  // One red<->blue field as an offset radial gradient (an organic
+  // "shape" rather than a flat wash). Rebuilt each frame in the
+  // translated space so it stays centred on the watch. Petals reuse
+  // this exact gradient, so they look like the bg coming forward.
+  petalGradient = drawingContext.createRadialGradient(
+    -WATCH_R * 0.35, -WATCH_R * 0.4, WATCH_R * 0.12,   // blue focus, upper-left
+     0, 0, WATCH_R * 1.25                              // out to crimson edge
+  );
+  petalGradient.addColorStop(0.0, 'rgb(0, 160, 255)');   // pebble blue
+  petalGradient.addColorStop(0.5, 'rgb(150, 60, 180)');  // purple blend
+  petalGradient.addColorStop(1.0, 'rgb(220, 25, 55)');   // pebble crimson
+
+  // Background: same gradient, then a translucent white veil so it reads
+  // as a pastel and lets the full-strength petals pop in front.
+  drawingContext.fillStyle = petalGradient;
+  drawingContext.fillRect(-WATCH_R, -WATCH_R, WATCH_R * 2, WATCH_R * 2);
+  drawingContext.fillStyle = 'rgba(255, 255, 255, 0.62)';
+  drawingContext.fillRect(-WATCH_R, -WATCH_R, WATCH_R * 2, WATCH_R * 2);
 
   // ── BRANCHES ──────────────────────────────────────────────
   for (var i = 0; i < branches.length; i++) {
@@ -634,25 +644,25 @@ function drawPetal(px, py, size, ang) {
   var notchX = tipX - cos(ang) * notchDepth;
   var notchY = tipY - sin(ang) * notchDepth;
 
-  fill(255);
-  stroke(0);
-  strokeWeight(1);
+  var e1x = tipX + perpX * 1.5, e1y = tipY + perpY * 1.5;
+  var e2x = tipX - perpX * 1.5, e2y = tipY - perpY * 1.5;
 
-  beginShape();
-  vertex(round(px), round(py));
-  quadraticVertex(round(c1x), round(c1y), round(tipX + perpX * 1.5), round(tipY + perpY * 1.5));
-  endShape();
+  // Build the petal as one closed native path so we can fill it with the
+  // shared gradient (p5's fill() can't take a canvas gradient).
+  var ctx = drawingContext;
+  ctx.beginPath();
+  ctx.moveTo(round(px), round(py));
+  ctx.quadraticCurveTo(round(c1x), round(c1y), round(e1x), round(e1y));
+  ctx.lineTo(round(notchX), round(notchY));
+  ctx.lineTo(round(e2x), round(e2y));
+  ctx.quadraticCurveTo(round(c2x), round(c2y), round(px), round(py));
+  ctx.closePath();
 
-  beginShape();
-  vertex(round(tipX + perpX * 1.5), round(tipY + perpY * 1.5));
-  vertex(round(notchX), round(notchY));
-  vertex(round(tipX - perpX * 1.5), round(tipY - perpY * 1.5));
-  endShape();
-
-  beginShape();
-  vertex(round(tipX - perpX * 1.5), round(tipY - perpY * 1.5));
-  quadraticVertex(round(c2x), round(c2y), round(px), round(py));
-  endShape();
+  ctx.fillStyle = petalGradient;   // gradient "comes to front" through the petal
+  ctx.fill();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = '#000';
+  ctx.stroke();
 }
 
 // ── PIXEL HEART ─────────────────────────────────────────────────
