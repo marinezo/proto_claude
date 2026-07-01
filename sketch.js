@@ -1,13 +1,12 @@
 /* PROJECT: Sakura_Crisp_Fixed_Spin
    THEME: Sensory Transducer
-   PALETTE: Radial glow on black (ref: Apple cycle-tracking face).
-            - Background: warm core -> crimson -> indigo -> BLACK at the rim,
-              so the face fades into black edges.
-            - Petals: filled with a brighter build of the same field so they
-              read as luminous shapes glowing in front of the darker surround.
-            - Branches: no fill, black stroke only (glow shows through).
+   PALETTE: Centred radial glow on black (ref: Apple cycle-tracking face).
+            - Colours: LIGHT tints of the Pebbles blue + red, centred, fading
+              to a thick black rim.
+            - Petals: brighter build of the same field so they glow in front.
+            - Branches: filled with the background gradient (blend into the
+              bg) + black stroke.
             - All strokes black, 1px.
-            Hues share the Pebbles palette (crimson + blue through purple).
    FIXES:
    - Petals stop spinning when they settle (Damping applied to spin).
    - Ground friction added to rotation.
@@ -46,7 +45,8 @@ var windEnergy    = 0.1;
 var windNoiseTime = 0;
 var bgDots = [];
 var NUM_BG_DOTS = 1800;
-var petalGradient = null;     // shared red<->blue gradient, rebuilt each frame
+var petalGradient = null;     // brighter build, used for petal fills
+var bgGradient = null;        // background field, also used to fill branches
 var BG_WHITE_R = WATCH_R * 0.15;   // inner epicenter
 var BG_BLUE_R  = WATCH_R * 0.94;   // start of the thin outer ring
 
@@ -103,10 +103,6 @@ function BranchSegment(startV, endV, thStart, thEnd) {
 }
 
 BranchSegment.prototype.display = function() {
-  noFill();
-  stroke(0);
-  strokeWeight(1);
-
   var dir = p5.Vector.sub(this.end, this.start);
   var perp = createVector(-dir.y, dir.x);
   perp.normalize();
@@ -116,12 +112,20 @@ BranchSegment.prototype.display = function() {
   var p3 = p5.Vector.add(this.end, p5.Vector.mult(perp, -this.thEnd / 2));
   var p4 = p5.Vector.add(this.end, p5.Vector.mult(perp, this.thEnd / 2));
 
-  beginShape();
-  vertex(p1.x, p1.y);
-  vertex(p2.x, p2.y);
-  vertex(p3.x, p3.y);
-  vertex(p4.x, p4.y);
-  endShape(CLOSE);
+  // Fill with the background gradient so branches blend into the bg,
+  // then outline in black.
+  var ctx = drawingContext;
+  ctx.beginPath();
+  ctx.moveTo(p1.x, p1.y);
+  ctx.lineTo(p2.x, p2.y);
+  ctx.lineTo(p3.x, p3.y);
+  ctx.lineTo(p4.x, p4.y);
+  ctx.closePath();
+  ctx.fillStyle = bgGradient;
+  ctx.fill();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = '#000';
+  ctx.stroke();
 };
 
 // ── LOOSE PETAL ───────────────────────────────────────────
@@ -496,31 +500,32 @@ function draw() {
   drawingContext.arc(0, 0, WATCH_R - 1, 0, TWO_PI);
   drawingContext.clip();
 
-  // ── GRADIENT CLOCK FACE (glow on black) ──────────────────
-  // Radial glow sitting slightly high: warm core -> crimson -> indigo ->
-  // black at the rim, so the face dissolves into the black edges.
-  var gx = 0, gy = -WATCH_R * 0.15;
-  var bgGrad = drawingContext.createRadialGradient(
-    gx, gy, WATCH_R * 0.05,
-    gx, gy, WATCH_R * 1.05
+  // ── GRADIENT CLOCK FACE (centred glow, thick black rim) ──
+  // Centred radial glow: light tints of the Pebbles red + blue in the
+  // middle, fading early to a thick black rim.
+  var gx = 0, gy = 0;
+  bgGradient = drawingContext.createRadialGradient(
+    gx, gy, WATCH_R * 0.02,
+    gx, gy, WATCH_R * 0.95
   );
-  bgGrad.addColorStop(0.00, 'rgb(255, 150, 120)');  // warm coral core
-  bgGrad.addColorStop(0.35, 'rgb(220, 25, 55)');    // pebble crimson
-  bgGrad.addColorStop(0.70, 'rgb(70, 40, 140)');    // indigo (toward pebble blue)
-  bgGrad.addColorStop(1.00, 'rgb(0, 0, 0)');        // black edges
-  drawingContext.fillStyle = bgGrad;
+  bgGradient.addColorStop(0.00, 'rgb(255, 150, 170)');  // light red core
+  bgGradient.addColorStop(0.35, 'rgb(150, 185, 255)');  // light blue
+  bgGradient.addColorStop(0.62, 'rgb(45, 45, 95)');     // dark indigo
+  bgGradient.addColorStop(0.80, 'rgb(0, 0, 0)');        // black...
+  bgGradient.addColorStop(1.00, 'rgb(0, 0, 0)');        // ...thick black rim
+  drawingContext.fillStyle = bgGradient;
   drawingContext.fillRect(-WATCH_R, -WATCH_R, WATCH_R * 2, WATCH_R * 2);
 
-  // Petals reuse a BRIGHTER build of the same field (never full black), so
-  // they read as luminous shapes glowing in front of the darker surround.
+  // Petals: brighter build of the same field (never full black) so they
+  // glow in front of the darker surround.
   petalGradient = drawingContext.createRadialGradient(
-    gx, gy, WATCH_R * 0.05,
-    gx, gy, WATCH_R * 1.05
+    gx, gy, WATCH_R * 0.02,
+    gx, gy, WATCH_R * 0.95
   );
-  petalGradient.addColorStop(0.00, 'rgb(255, 205, 185)');
-  petalGradient.addColorStop(0.40, 'rgb(240, 70, 95)');
-  petalGradient.addColorStop(0.75, 'rgb(150, 70, 180)');
-  petalGradient.addColorStop(1.00, 'rgb(70, 45, 130)');
+  petalGradient.addColorStop(0.00, 'rgb(255, 190, 205)'); // light red
+  petalGradient.addColorStop(0.38, 'rgb(180, 205, 255)'); // light blue
+  petalGradient.addColorStop(0.68, 'rgb(90, 90, 160)');   // indigo
+  petalGradient.addColorStop(1.00, 'rgb(55, 55, 110)');
 
   // ── BRANCHES ──────────────────────────────────────────────
   for (var i = 0; i < branches.length; i++) {
