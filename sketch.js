@@ -1,12 +1,13 @@
 /* PROJECT: Sakura_Crisp_Fixed_Spin
    THEME: Sensory Transducer
-   PALETTE: One red<->blue gradient (Pebbles' crimson + blue, blending
-            through purple) laid as an offset radial "shape".
-            - Background: that gradient, softened to a pastel so it sits back.
-            - Petals: filled with the SAME gradient at full strength, so the
-              gradient appears to come forward through the petal shapes.
-            - Branches: no fill, black stroke only (bg shows through).
+   PALETTE: Radial glow on black (ref: Apple cycle-tracking face).
+            - Background: warm core -> crimson -> indigo -> BLACK at the rim,
+              so the face fades into black edges.
+            - Petals: filled with a brighter build of the same field so they
+              read as luminous shapes glowing in front of the darker surround.
+            - Branches: no fill, black stroke only (glow shows through).
             - All strokes black, 1px.
+            Hues share the Pebbles palette (crimson + blue through purple).
    FIXES:
    - Petals stop spinning when they settle (Damping applied to spin).
    - Ground friction added to rotation.
@@ -369,7 +370,7 @@ function setup() {
 
 // ── DRAW ────────────────────────────────────────────────────────
 function draw() {
-  background(255);
+  background(0);
 
   var now = millis();
   var t = now * 0.001;
@@ -495,25 +496,31 @@ function draw() {
   drawingContext.arc(0, 0, WATCH_R - 1, 0, TWO_PI);
   drawingContext.clip();
 
-  // ── GRADIENT CLOCK FACE ───────────────────────────────────
-  // One red<->blue field as an offset radial gradient (an organic
-  // "shape" rather than a flat wash). Rebuilt each frame in the
-  // translated space so it stays centred on the watch. Petals reuse
-  // this exact gradient, so they look like the bg coming forward.
-  petalGradient = drawingContext.createRadialGradient(
-    -WATCH_R * 0.35, -WATCH_R * 0.4, WATCH_R * 0.12,   // blue focus, upper-left
-     0, 0, WATCH_R * 1.25                              // out to crimson edge
+  // ── GRADIENT CLOCK FACE (glow on black) ──────────────────
+  // Radial glow sitting slightly high: warm core -> crimson -> indigo ->
+  // black at the rim, so the face dissolves into the black edges.
+  var gx = 0, gy = -WATCH_R * 0.15;
+  var bgGrad = drawingContext.createRadialGradient(
+    gx, gy, WATCH_R * 0.05,
+    gx, gy, WATCH_R * 1.05
   );
-  petalGradient.addColorStop(0.0, 'rgb(0, 160, 255)');   // pebble blue
-  petalGradient.addColorStop(0.5, 'rgb(150, 60, 180)');  // purple blend
-  petalGradient.addColorStop(1.0, 'rgb(220, 25, 55)');   // pebble crimson
+  bgGrad.addColorStop(0.00, 'rgb(255, 150, 120)');  // warm coral core
+  bgGrad.addColorStop(0.35, 'rgb(220, 25, 55)');    // pebble crimson
+  bgGrad.addColorStop(0.70, 'rgb(70, 40, 140)');    // indigo (toward pebble blue)
+  bgGrad.addColorStop(1.00, 'rgb(0, 0, 0)');        // black edges
+  drawingContext.fillStyle = bgGrad;
+  drawingContext.fillRect(-WATCH_R, -WATCH_R, WATCH_R * 2, WATCH_R * 2);
 
-  // Background: same gradient, then a translucent white veil so it reads
-  // as a pastel and lets the full-strength petals pop in front.
-  drawingContext.fillStyle = petalGradient;
-  drawingContext.fillRect(-WATCH_R, -WATCH_R, WATCH_R * 2, WATCH_R * 2);
-  drawingContext.fillStyle = 'rgba(255, 255, 255, 0.62)';
-  drawingContext.fillRect(-WATCH_R, -WATCH_R, WATCH_R * 2, WATCH_R * 2);
+  // Petals reuse a BRIGHTER build of the same field (never full black), so
+  // they read as luminous shapes glowing in front of the darker surround.
+  petalGradient = drawingContext.createRadialGradient(
+    gx, gy, WATCH_R * 0.05,
+    gx, gy, WATCH_R * 1.05
+  );
+  petalGradient.addColorStop(0.00, 'rgb(255, 205, 185)');
+  petalGradient.addColorStop(0.40, 'rgb(240, 70, 95)');
+  petalGradient.addColorStop(0.75, 'rgb(150, 70, 180)');
+  petalGradient.addColorStop(1.00, 'rgb(70, 45, 130)');
 
   // ── BRANCHES ──────────────────────────────────────────────
   for (var i = 0; i < branches.length; i++) {
@@ -556,7 +563,7 @@ function draw() {
   var heartY = WATCH_R * 0.62;
   drawPixelHeart(-24, heartY, 10);
 
-  fill(40);
+  fill(255);
   noStroke();
   textAlign(LEFT, CENTER);
   textSize(14);
@@ -571,7 +578,7 @@ function draw() {
   // ── INDICATOR DOT ─────────────────────────────────────────
   var indX = cx - WATCH_R - 30;
   var indY = cy - WATCH_R - 30;
-  stroke(0);
+  stroke(255);
   strokeWeight(1);
   if (indicatorFill > 0.5) {
     fill(220, 25, 55);
@@ -582,7 +589,7 @@ function draw() {
 
   // ── INSTRUCTIONS ──────────────────────────────────────────
   noStroke();
-  fill(120);
+  fill(160);
   textSize(10);
   textFont('monospace');
   textAlign(CENTER, BOTTOM);
