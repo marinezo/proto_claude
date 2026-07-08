@@ -38,9 +38,12 @@ var bloomSlots = [];
 var windEnergy    = 0.1;
 var windNoiseTime = 0;
 var bgDots = [];
-var NUM_BG_DOTS = 1800;
+var NUM_BG_DOTS = 7000;
 var BG_WHITE_R = WATCH_R * 0.15;   // inner epicenter
 var BG_BLUE_R  = WATCH_R * 0.94;   // start of the thin outer ring
+var BG_FLOW_SCALE = 0.006;
+var BG_FLOW_SPEED = 0.15;
+var BG_MAX_SPEED  = 0.4;
 
 // ── PETAL IN A FLOWER ───────────────────────────────────────────
 function createFlowerPetal(ang) {
@@ -129,9 +132,11 @@ function createLoosePetal(x, y) {
 }
 
 // ── CLOCK FACE BACKGROUND DOTS ───────────────────────────────────
-// Fixed dotted texture behind the branches/petals: a small white
+// Dense dotted texture behind the branches/petals: a small white
 // epicenter, a red band filling most of the circle, and a thin
-// blue ring near the rim.
+// blue ring near the rim. Each dot drifts slowly through a Perlin
+// flow field, like liquid stirring inside the watch face, and stays
+// contained within the circle.
 function generateBgDots() {
   for (var i = 0; i < NUM_BG_DOTS; i++) {
     var r = WATCH_R * sqrt(random());
@@ -143,10 +148,49 @@ function generateBgDots() {
     bgDots.push({
       x: cos(theta) * r,
       y: sin(theta) * r,
+      vx: 0,
+      vy: 0,
       band: band,
       sz: random(0.8, 1.8),
       a: random(120, 220)
     });
+  }
+}
+
+function updateBgDots(t) {
+  var maxD = WATCH_R - 2;
+  for (var i = 0; i < bgDots.length; i++) {
+    var bd = bgDots[i];
+
+    var n = noise(bd.x * BG_FLOW_SCALE + 1000, bd.y * BG_FLOW_SCALE + 1000, t * BG_FLOW_SPEED);
+    var angle = n * TWO_PI * 2;
+    bd.vx += cos(angle) * 0.02;
+    bd.vy += sin(angle) * 0.02;
+
+    bd.vx *= 0.94;
+    bd.vy *= 0.94;
+
+    var sp = sqrt(bd.vx * bd.vx + bd.vy * bd.vy);
+    if (sp > BG_MAX_SPEED) {
+      bd.vx = bd.vx / sp * BG_MAX_SPEED;
+      bd.vy = bd.vy / sp * BG_MAX_SPEED;
+    }
+
+    bd.x += bd.vx;
+    bd.y += bd.vy;
+
+    // stay scooped inside the circular interface
+    var d = sqrt(bd.x * bd.x + bd.y * bd.y);
+    if (d > maxD && d > 0.01) {
+      var nx = bd.x / d, ny = bd.y / d;
+      bd.x = nx * maxD;
+      bd.y = ny * maxD;
+      var dot = bd.vx * nx + bd.vy * ny;
+      if (dot > 0) {
+        bd.vx -= nx * dot * 1.4;
+        bd.vy -= ny * dot * 1.4;
+      }
+    }
   }
 }
 
@@ -490,7 +534,7 @@ function draw() {
   drawingContext.clip();
 
   // ── CLOCK FACE BACKGROUND ─────────────────────────────────
-  blendMode(ADD);
+  updateBgDots(t);
   noStroke();
   for (var i = 0; i < bgDots.length; i++) {
     var bd = bgDots[i];
@@ -499,7 +543,6 @@ function draw() {
     else fill(255, 255, 255, bd.a);
     ellipse(bd.x, bd.y, bd.sz, bd.sz);
   }
-  blendMode(BLEND);
 
   // ── BRANCHES ──────────────────────────────────────────────
   for (var i = 0; i < branches.length; i++) {
