@@ -84,7 +84,7 @@ function drawBackground() {
 
 function handleSpawning() {
   if (millis() < nextSpawnAt) return;
-  nextSpawnAt = millis() + random(1300, 2100);
+  nextSpawnAt = millis() + random(4200, 6000);
   if (items.length >= 6) return;
 
   let idx = floor(random(CANDY_DATA.length));
@@ -97,7 +97,7 @@ function handleSpawning() {
     kind, data,
     x: SPAWN_X, y: SHELF_Y,
     r: kind === 'letter' ? 22 : 24,
-    speed: random(0.85, 1.25),
+    speed: random(0.22, 0.32),
     phase: random(TWO_PI),
     caught: false
   });
@@ -158,8 +158,10 @@ function catchItem(it) {
   learnedSet.add(it.data.letter);
   if (it.kind === 'candy') {
     answerState = { type: 'word', data: it.data };
+    speakLetterThenWord(it.data.name, it.data.word);
   } else {
     answerState = { type: 'letterHold', data: it.data, until: millis() + 3000 };
+    speak(it.data.name);
   }
 }
 
@@ -186,7 +188,9 @@ function drawAnswerBox() {
   const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
 
   if (answerState.type === 'letterHold' && millis() > answerState.until) {
-    answerState = { type: 'word', data: answerState.data };
+    const d = answerState.data;
+    answerState = { type: 'word', data: d };
+    speak(d.word);
   }
 
   if (answerState.type === 'idle') {
@@ -202,12 +206,13 @@ function drawAnswerBox() {
 
   if (answerState.type === 'letterHold') {
     const d = answerState.data;
-    drawCandyIcon(d.icon, cx, cy - 14, 132);
+    drawCandyIcon(d.icon, cx, cy - 4, 118);
     const remain = constrain((answerState.until - millis()) / 3000, 0, 1);
+    const badgeX = b.x + b.w - 34, badgeY = b.y + 34;
     PS('black', 2); PF(d.colKey);
-    rect(cx - 30, cy + 4, 24, 24, 6);
-    PN(); fill(20); textAlign(CENTER, CENTER); textStyle(BOLD); textSize(20);
-    text(d.letter, cx - 30, cy + 6);
+    rect(badgeX, badgeY, 34, 34, 8);
+    PN(); fill(20); textAlign(CENTER, CENTER); textStyle(BOLD); textSize(24);
+    text(d.letter, badgeX, badgeY + 2);
     textStyle(NORMAL);
     PN(); PF('lgray');
     rect(cx, b.y + b.h - 20, b.w - 60, 8, 4);
@@ -218,12 +223,13 @@ function drawAnswerBox() {
 
   if (answerState.type === 'word') {
     const d = answerState.data;
-    drawCandyIcon(d.icon, cx - 130, cy - 6, 78);
+    drawCandyIcon(d.icon, cx, cy - 46, 72);
+    const maxW = b.w - 60;
     const w40 = measureHebrewWordWidth(d.word, 40);
-    const fsize = w40 > 220 ? max(20, 40 * 220 / w40) : 40;
-    drawHebrewWord(d.word, cx + 26, cy - 14, fsize, PAL[d.colKey]);
+    const fsize = w40 > maxW ? max(20, 40 * maxW / w40) : 40;
+    drawHebrewWord(d.word, cx, cy + 30, fsize, PAL[d.colKey]);
     fill(120, 112, 106); noStroke(); textAlign(CENTER, CENTER); textSize(15);
-    text(d.gloss, cx + 26, cy + 44);
+    text(d.gloss, cx, cy + 58);
   }
 }
 
@@ -333,6 +339,7 @@ function handlePress(mx, my) {
   ensureAudio();
   if (dist(mx, my, W - 30, 26) < 20) {
     muted = !muted;
+    if (muted && window.speechSynthesis) window.speechSynthesis.cancel();
     return;
   }
   attemptCatch(mx, my);
@@ -343,6 +350,27 @@ function touchStarted() {
   if (touches.length > 0) handlePress(touches[0].x, touches[0].y);
   else handlePress(mouseX, mouseY);
   return false;
+}
+
+// ---------------------------------------------------------------------
+// Speech (letter name, then word)
+// ---------------------------------------------------------------------
+
+function speak(text) {
+  if (muted || !window.speechSynthesis) return;
+  try {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'he-IL';
+    u.rate = 0.8;
+    window.speechSynthesis.speak(u);
+  } catch (e) { /* speech unsupported, ignore */ }
+}
+
+function speakLetterThenWord(letterName, word) {
+  if (muted || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  speak(letterName);
+  speak(word);
 }
 
 // ---------------------------------------------------------------------

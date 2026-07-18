@@ -102,13 +102,20 @@ function icon_burger(x, y, s) {
 
 function icon_waffle(x, y, s) {
   push(); translate(x, y); scale(s / 44);
-  PS('black', 2); PF('peach'); rect(0, 0, 32, 32, 3);
-  PS('brown', 1.5);
-  line(-8, -16, -8, 16); line(8, -16, 8, 16);
-  line(-16, -8, 16, -8); line(-16, 8, 16, 8);
-  PS('orange', 2);
-  line(-12, -12, -4, -2); line(-4, -2, 4, -10); line(4, -10, 12, 2);
-  PS('black', 1.5); PF('yellow'); rect(-4, -10, 8, 6, 1);
+  PS('black', 2); PF('tan'); rect(0, 0, 34, 34, 4);
+  PS('brown', 1.3);
+  line(-17, -8.5, 17, -8.5); line(-17, 0, 17, 0); line(-17, 8.5, 17, 8.5);
+  line(-8.5, -17, -8.5, 17); line(0, -17, 0, 17); line(8.5, -17, 8.5, 17);
+  PN(); PF('brown');
+  for (let iy = 0; iy < 4; iy++) {
+    for (let ix = 0; ix < 4; ix++) {
+      const cx2 = -12.75 + ix * 8.5, cy2 = -12.75 + iy * 8.5;
+      ellipse(cx2, cy2, 3.5, 3.5);
+    }
+  }
+  PS('orange', 2.5);
+  line(-13, -13, -6, -3); line(-6, -3, 3, -11); line(3, -11, 13, 1); line(13, 1, 8, 12);
+  PS('black', 1.5); PF('yellow'); rect(-5, -12, 9, 7, 1);
   pop();
 }
 
@@ -133,7 +140,7 @@ function icon_milk(x, y, s) {
 }
 
 function icon_toffee(x, y, s) {
-  push(); translate(x, y); scale(s / 44);
+  push(); translate(x, y); scale(-s / 44, s / 44);
   PS('black', 2); PF('yellow');
   triangle(-7, -7, -7, 7, -18, 0);
   triangle(7, -7, 7, 7, 18, 0);
@@ -236,10 +243,17 @@ function icon_cottoncandy(x, y, s) {
 
 function icon_cacao(x, y, s) {
   push(); translate(x, y); scale(s / 44);
-  PS('black', 2); PF('choc'); rect(0, 2, 26, 24, 2);
-  PF('peach'); rect(0, 2, 26, 10, 0);
-  PF('choc'); ellipse(0, 2, 10, 6);
-  PS('black', 1); line(-3, 2, 3, 2);
+  PS('dgray', 2); noFill();
+  arc(13, 3, 15, 17, -HALF_PI, HALF_PI, OPEN);
+  PS('black', 2); PF('cream');
+  rect(0, 6, 24, 20, 3);
+  PN(); PF('choc');
+  ellipse(0, -4, 22, 8);
+  PN(); PF('cream');
+  ellipse(-4, -5, 3, 3); ellipse(3, -3, 2.5, 2.5);
+  PS('lgray', 2); noFill();
+  line(-6, -14, -8, -18); line(-8, -18, -5, -22);
+  line(3, -14, 1, -18); line(1, -18, 4, -22);
   pop();
 }
 
