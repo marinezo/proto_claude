@@ -545,10 +545,25 @@
       hoverCaption.classList.remove('visible');
     }
   }
-  [document.getElementById('triNavTitle'), document.getElementById('stickyNavTitle')].forEach(function(el){
+  var triNavTitle = document.getElementById('triNavTitle');
+  var stickyNavTitle = document.getElementById('stickyNavTitle');
+  [triNavTitle, stickyNavTitle].forEach(function(el){
     el.addEventListener('pointerenter', showBio);
     el.addEventListener('pointerleave', hideBio);
   });
+  // safety net: if a nav title fades out / goes pointer-events:none under a
+  // *stationary* cursor (scrolling with the wheel without moving the mouse),
+  // no pointerleave fires and bioActive gets stuck true forever, freezing
+  // the caption on the bio blurb. A pointermove watchdog self-heals it by
+  // checking what's actually under the cursor whenever it does move.
+  window.exitBioIfStray = function(){
+    if (bioActive) hideBio();
+  };
+  document.addEventListener('pointermove', function(e){
+    if (!bioActive) return;
+    var target = document.elementFromPoint(e.clientX, e.clientY);
+    if (target !== triNavTitle && target !== stickyNavTitle) hideBio();
+  }, { passive: true });
 
   function frame(now){
     var t = (now - startTime) / 1000;
@@ -613,6 +628,7 @@
   // own diameter, then the sticky bar fades in at 4/5 - leaving a gap so
   // the two are never visible at the same time.
   var ticking = false;
+  var triWasVisible = true, stickyWasVisible = false;
   function updateNav(){
     ticking = false;
     var portholeHeight = porthole.getBoundingClientRect().height;
@@ -621,6 +637,15 @@
     var showSticky = scrolled >= portholeHeight * 0.8;
     document.body.classList.toggle('hero-nav-hidden', hideTri);
     stickyNav.classList.toggle('visible', showSticky);
+    // a nav title can go pointer-events:none out from under a stationary
+    // cursor with no pointerleave firing - if either just disappeared,
+    // force-clear any bio-hover state stuck on because of that.
+    var triNowVisible = !hideTri, stickyNowVisible = showSticky;
+    if ((triWasVisible && !triNowVisible) || (stickyWasVisible && !stickyNowVisible)) {
+      if (window.exitBioIfStray) window.exitBioIfStray();
+    }
+    triWasVisible = triNowVisible;
+    stickyWasVisible = stickyNowVisible;
   }
   function onScroll(){
     if (!ticking) {
