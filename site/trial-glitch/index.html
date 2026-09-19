@@ -48,7 +48,7 @@
   .sticky-nav{
     position:fixed; top:0; left:0; right:0; z-index:50;
     display:flex; align-items:center; justify-content:space-between;
-    padding:calc(env(safe-area-inset-top,0px) + 18px) 26px 18px;
+    padding:calc(env(safe-area-inset-top,0px) + 18px) 2px 18px;
     font-size:1.1rem;
     background:linear-gradient(to bottom, rgba(244,244,244,.96), rgba(244,244,244,.85) 70%, rgba(244,244,244,0));
     opacity:0; transform:translateY(-8px); pointer-events:none;
@@ -93,22 +93,22 @@
     overflow:hidden;
   }
 
-  /* trial: no circular clip and a wide, non-square box - the fisheye shader's
-     own math still assumes a circle, so rendering it into a rectangle is what
-     produces the melted, chromatic-bloom oval instead of a clean porthole. */
   .porthole-assembly{
     position:relative;
-    width:min(70vw, 70vh);
-    aspect-ratio:2/1;
+    width:min(88vw, 88vh);
+    aspect-ratio:1/1;
   }
 
   .bezel-ring{
     position:absolute; inset:0;
+    border-radius:50%;
     pointer-events:none;
   }
 
   .lens{
-    position:absolute; inset:0;
+    position:absolute; inset:9%;
+    border-radius:50%;
+    overflow:hidden;
     background:var(--paper);
   }
   .lens canvas{
@@ -118,29 +118,30 @@
   /* --- works index --- */
   .works-section{
     width:100%;
-    padding:140px 26px 160px;
+    padding:140px 2px 40px;
   }
   .index-container{
-    width:100%;
+    width:25vw;
   }
-  /* trial: no grid at all - every field is just a plain stacked line, dense
-     and undifferentiated, the way this looked by accident when the columns
-     broke. */
+  /* uniform font size across header, rows and the type subline; two columns
+     (Project/Year) - a third child in each row auto-wraps to a new grid row
+     still starting at column 1, which is what puts the type line directly
+     under the project title with no dedicated column for it. */
+  .index-header, .index-row{
+    display:grid;
+    grid-template-columns:4fr 1fr;
+    font-size:13px;
+  }
   .index-header{
-    font-size:1.2rem;
     text-transform:uppercase;
     letter-spacing:.04em;
     color:var(--ink-soft);
   }
-  .index-header div, .index-row div{ display:block; }
   .index-row{
-    display:block;
-    font-size:1.05rem;
     text-decoration:none;
     color:inherit;
   }
-  .index-row .col-desc{
-    font-size:12px;
+  .index-row .col-type{
     color:var(--ink-soft);
   }
 
@@ -150,8 +151,8 @@
     width:100%;
     background:var(--bio-bg);
     color:var(--bio-ink);
-    padding:140px 26px 120px;
-    display:flex; justify-content:flex-end;
+    padding:120px 5px 120px 2px;
+    margin-top:60px;
   }
   .page-end{
     position:absolute; left:50%; bottom:26px; transform:translateX(-50%);
@@ -179,10 +180,11 @@
   @media (max-width:600px){
     .nav-corner, .nav-title{ font-size:.85rem; }
     .porthole-assembly{ width:min(82vw, 68vh); }
-    .sticky-nav{ font-size:.8rem; padding-left:18px; padding-right:18px; }
+    .sticky-nav{ font-size:.8rem; }
     .sticky-nav .sticky-links{ gap:16px; }
-    .works-section{ padding:32px 18px 120px; }
-    .bio-section{ padding:60px 22px 100px; }
+    .works-section{ padding:32px 2px 40px; }
+    .index-container{ width:100%; }
+    .bio-section{ padding:60px 5px 100px 2px; margin-top:32px; }
     .bio-text{ width:100%; max-width:100%; }
   }
 </style>
@@ -218,78 +220,66 @@
   <div class="index-container">
     <div class="index-header">
       <div>Project</div>
-      <div></div>
       <div>Year</div>
-      <div>Type</div>
     </div>
 
     <div class="index-rows">
       <a href="project.html" class="index-row">
         <div>The Age of Query</div>
-        <div class="col-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
         <div>2025</div>
         <div class="col-type">Education, Exhibition</div>
       </a>
 
       <a href="project.html" class="index-row">
         <div>Re-imagining The Sounds of Home</div>
-        <div class="col-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
         <div>2024</div>
         <div class="col-type">Research, Object</div>
       </a>
 
       <a href="project.html" class="index-row">
         <div>Empathic Directions for Parental Tech</div>
-        <div class="col-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
         <div>2024</div>
         <div class="col-type">Research</div>
       </a>
 
       <a href="project.html" class="index-row">
         <div>Thoughtful Object</div>
-        <div class="col-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
         <div>2023-</div>
         <div class="col-type">Education, Research</div>
       </a>
 
       <a href="project.html" class="index-row">
         <div>Speaking of Collective Dining</div>
-        <div class="col-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
         <div>2023</div>
         <div class="col-type">Research</div>
       </a>
 
       <a href="project.html" class="index-row">
         <div>Audible Imagery</div>
-        <div class="col-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
         <div>2021, 2023</div>
         <div class="col-type">Research, Exhibition</div>
       </a>
 
       <a href="project.html" class="index-row">
         <div>CHANEL Spaces of Transformation</div>
-        <div class="col-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
         <div>2019</div>
         <div class="col-type">Space Design, Exhibition</div>
       </a>
 
       <a href="project.html" class="index-row">
         <div>Living Sounds</div>
-        <div class="col-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
         <div>2019</div>
         <div class="col-type">Object</div>
       </a>
 
       <a href="project.html" class="index-row">
         <div>ANA tomo</div>
-        <div class="col-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
         <div>2018</div>
         <div class="col-type">Object</div>
       </a>
 
       <a href="project.html" class="index-row">
         <div>The Waves Beyond</div>
-        <div class="col-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
         <div>2017</div>
         <div class="col-type">Object, Exhibition</div>
       </a>
