@@ -309,13 +309,17 @@
 <script>
 (function(){
   var IMAGES = [
-    { src: "__IMG_CIRCUIT__",name: "Waves Beyond", year: "2021", type: "Object" },
-    { src: "__IMG_CHANEL__",name: "CHANEL Spaces of Transformation", year: "2019", type: "Space - Research" },
-    { src: "__IMG_MOSS__",  name: "Kaleidoscope Kit", year: "2022", type: "Object - Research" },
-    { src: "__IMG_BELLS__", name: "Thoughtful Object Workshop", year: "2023", type: "Education - Research - Object" }
+    { src: "https://marinezo.com/img/home/fisheye/1.png", name: "Tanikawa Shuntaro's Radio Waves Beyond", year: "2017", type: "Object" },
+    { src: "https://marinezo.com/img/home/fisheye/2.png", name: "CHANEL Spaces of Transformation", year: "2019", type: "Space - Design Research" },
+    { src: "https://marinezo.com/img/home/fisheye/3.png", name: "Zen Garden Kaleidoscope Kit", year: "2017", type: "Object - Design Research" },
+    { src: "https://marinezo.com/img/home/fisheye/4.png", name: "Thoughtful Object Workshop 2", year: "2025", type: "Education - Design Research - Object" },
+    { src: "https://marinezo.com/img/home/fisheye/5.png", name: "5", year: "2025", type: "Education - Design Research - Object" },
+    { src: "https://marinezo.com/img/home/fisheye/6.png", name: "6", year: "2025", type: "Education - Design Research - Object" },
+    { src: "https://marinezo.com/img/home/fisheye/7.png", name: "7", year: "2025", type: "Education - Design Research - Object" },
+    { src: "https://marinezo.com/img/home/fisheye/8.png", name: "8", year: "2025", type: "Education - Design Research - Object" }
   ];
 
-  var zoomLevels = [1.8, 1.2, 1.0, 1.2];
+  var zoomLevels = [1.9, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5];
   var rippleAmount = 0.014;
   var warpStrength = 0.60;
   var warpBoost = 0;
@@ -342,29 +346,14 @@
     "precision highp float;",
     "uniform sampler2D u_tex0;",
     "uniform sampler2D u_tex1;",
-    "uniform sampler2D u_tex2;",
-    "uniform sampler2D u_tex3;",
     "uniform float u_warp;",
     "uniform float u_aberration;",
     "uniform float u_ripple;",
     "uniform float u_time;",
-    "uniform float u_curIdx;",
-    "uniform float u_nextIdx;",
     "uniform float u_zoomCur;",
     "uniform float u_zoomNext;",
     "uniform float u_mix;",
     "varying vec2 v_uv;",
-    "vec3 sampleImg(float idxMod, vec2 uvR, vec2 uvGc, vec2 uvB){",
-    "  if (idxMod < 0.5) {",
-    "    return vec3(texture2D(u_tex0, uvR).r, texture2D(u_tex0, uvGc).g, texture2D(u_tex0, uvB).b);",
-    "  } else if (idxMod < 1.5) {",
-    "    return vec3(texture2D(u_tex1, uvR).r, texture2D(u_tex1, uvGc).g, texture2D(u_tex1, uvB).b);",
-    "  } else if (idxMod < 2.5) {",
-    "    return vec3(texture2D(u_tex2, uvR).r, texture2D(u_tex2, uvGc).g, texture2D(u_tex2, uvB).b);",
-    "  } else {",
-    "    return vec3(texture2D(u_tex3, uvR).r, texture2D(u_tex3, uvGc).g, texture2D(u_tex3, uvB).b);",
-    "  }",
-    "}",
     "void main(){",
     "  vec2 c = v_uv - 0.5;",
     "  float r = length(c) * 2.0;",
@@ -390,8 +379,8 @@
     "  vec2 uvBcur = vec2(clamp(uvGcur.x - ab, 0.0, 1.0), uvGcur.y);",
     "  vec2 uvRnext = vec2(clamp(uvGnext.x + ab, 0.0, 1.0), uvGnext.y);",
     "  vec2 uvBnext = vec2(clamp(uvGnext.x - ab, 0.0, 1.0), uvGnext.y);",
-    "  vec3 colA = sampleImg(u_curIdx, uvRcur, uvGcur, uvBcur);",
-    "  vec3 colB = sampleImg(u_nextIdx, uvRnext, uvGnext, uvBnext);",
+    "  vec3 colA = vec3(texture2D(u_tex0, uvRcur).r, texture2D(u_tex0, uvGcur).g, texture2D(u_tex0, uvBcur).b);",
+    "  vec3 colB = vec3(texture2D(u_tex1, uvRnext).r, texture2D(u_tex1, uvGnext).g, texture2D(u_tex1, uvBnext).b);",
     "  vec3 col = mix(colA, colB, u_mix);",
     "  float fade = smoothstep(0.72, 1.0, r);",
     "  vec3 paperColor = vec3(0.957, 0.957, 0.957);",
@@ -416,14 +405,10 @@
 
   var uTex0 = gl.getUniformLocation(prog, 'u_tex0');
   var uTex1 = gl.getUniformLocation(prog, 'u_tex1');
-  var uTex2 = gl.getUniformLocation(prog, 'u_tex2');
-  var uTex3 = gl.getUniformLocation(prog, 'u_tex3');
   var uWarp = gl.getUniformLocation(prog, 'u_warp');
   var uAb = gl.getUniformLocation(prog, 'u_aberration');
   var uRipple = gl.getUniformLocation(prog, 'u_ripple');
   var uTime = gl.getUniformLocation(prog, 'u_time');
-  var uCurIdx = gl.getUniformLocation(prog, 'u_curIdx');
-  var uNextIdx = gl.getUniformLocation(prog, 'u_nextIdx');
   var uZoomCur = gl.getUniformLocation(prog, 'u_zoomCur');
   var uZoomNext = gl.getUniformLocation(prog, 'u_zoomNext');
   var uMix = gl.getUniformLocation(prog, 'u_mix');
@@ -463,23 +448,22 @@
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, textures[0]);
-  gl.activeTexture(gl.TEXTURE1);
-  gl.bindTexture(gl.TEXTURE_2D, textures[1]);
-  gl.activeTexture(gl.TEXTURE2);
-  gl.bindTexture(gl.TEXTURE_2D, textures[2]);
-  gl.activeTexture(gl.TEXTURE3);
-  gl.bindTexture(gl.TEXTURE_2D, textures[3]);
+  // only 2 texture units are ever bound (current + next) - rebindPair()
+  // swaps what they point at, so any number of IMAGES works, not just 4.
   gl.uniform1i(uTex0, 0);
   gl.uniform1i(uTex1, 1);
-  gl.uniform1i(uTex2, 2);
-  gl.uniform1i(uTex3, 3);
+  function rebindPair(curI, nextI){
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, textures[curI]);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, textures[nextI]);
+  }
 
   // --- fade state machine: hold -> cross-dissolve -> hold
   var HOLD = 7000, FADE = 2000;
   var PULSE_ATTACK = 0.35;
   var curIdx = 0, nextIdx = 1;
+  rebindPair(curIdx, nextIdx);
   var state = 'hold';
   var stateStart = performance.now();
   var startTime = performance.now();
@@ -590,6 +574,7 @@
       if(raw >= 1){
         curIdx = nextIdx;
         nextIdx = (nextIdx + 1) % IMAGES.length;
+        rebindPair(curIdx, nextIdx);
         state = 'hold'; stateStart = now; mix = 0; pulse = 0;
       }
     }
@@ -598,8 +583,6 @@
     gl.uniform1f(uAb, 0.014);
     gl.uniform1f(uRipple, rippleAmount + rippleBoost * pulse);
     gl.uniform1f(uTime, t);
-    gl.uniform1f(uCurIdx, curIdx);
-    gl.uniform1f(uNextIdx, nextIdx);
     gl.uniform1f(uZoomCur, zoomLevels[curIdx]);
     gl.uniform1f(uZoomNext, zoomLevels[nextIdx]);
     gl.uniform1f(uMix, mix);
