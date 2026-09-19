@@ -1,3 +1,4 @@
+<meta charset="UTF-8">
 <title>Marine Zorea</title>
 <style>
   :root{
@@ -314,8 +315,8 @@
   </p>
 
   <div class="page-end">
-    <a href="#" id="scrollTopLink">↑</a>
-    <div class="copyright">©2026 Marine Zorea</div>
+    <a href="#" id="scrollTopLink">&#8593;</a>
+    <div class="copyright">&copy;2026 Marine Zorea</div>
   </div>
 </section>
 
@@ -540,7 +541,7 @@ function smoothScrollTo(id){
   heroBottomHint.addEventListener('pointerenter', function(){
     hintHovering = true;
     if (!bioActive) {
-      hoverCaptionText.textContent = '↓';
+      hoverCaptionText.textContent = String.fromCharCode(8595); // down arrow
       hoverCaption.classList.add('visible');
     }
   });
