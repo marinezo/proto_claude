@@ -76,6 +76,15 @@
     .hover-caption{ font-size:.85rem; white-space:normal; max-width:80vw; text-align:center; }
   }
 
+  /* --- bottom-of-hero hint: hovering the empty margin below the porthole
+     (while still at the top of the page) shows a down-arrow that scrolls
+     to the index; the porthole's own square bounding box sits on top of
+     it in the DOM, so it naturally only catches the area outside the lens --- */
+  .hero-bottom-hint{
+    position:absolute; left:0; right:0; bottom:0; height:30%;
+    cursor:pointer;
+  }
+
   /* --- hero --- */
   .hero-section{
     position:relative; width:100%; height:100vh;
@@ -115,24 +124,17 @@
   }
   .index-header{
     display:grid;
-    grid-template-columns:2.5fr 0.8fr 1.2fr;
+    grid-template-columns:2fr 3fr 0.8fr 1.2fr;
     align-items:baseline;
     font-size:1.2rem;
     text-transform:uppercase;
     letter-spacing:.04em;
     padding-bottom:10px;
-    padding-right:calc(280px + 48px);
     color:var(--ink-soft);
   }
-  .works-layout{
-    display:flex;
-    align-items:flex-start;
-    gap:48px;
-  }
-  .index-rows{ flex:1; min-width:0; }
   .index-row{
     display:grid;
-    grid-template-columns:2.5fr 0.8fr 1.2fr;
+    grid-template-columns:2fr 3fr 0.8fr 1.2fr;
     align-items:baseline;
     padding:10px 0;
     border-top:1px solid var(--ink);
@@ -142,32 +144,31 @@
     transition:padding-left .3s cubic-bezier(.16,1,.3,1);
   }
   .index-row:hover{ padding-left:12px; }
-
-  .index-image-panel{
-    position:relative;
-    width:280px; flex-shrink:0;
-    aspect-ratio:3/4;
-    overflow:hidden;
-    background:var(--paper);
+  .index-row .col-desc{
+    font-size:12px;
+    color:var(--ink-soft);
+    opacity:0;
+    transition:opacity .3s ease;
   }
-  .index-image-panel img{
-    width:100%; height:100%; object-fit:cover; display:block;
-    transition:opacity .2s ease;
-  }
-
-  @media (max-width:900px){
-    .index-image-panel{ display:none; }
-    .index-header{ padding-right:0; }
-  }
+  .index-row:hover .col-desc{ opacity:1; }
 
   /* --- bio (bottom) --- */
   .bio-section{
+    position:relative;
     width:100%;
     background:var(--bio-bg);
     color:var(--bio-ink);
     padding:140px 26px 120px;
     display:flex; justify-content:flex-end;
   }
+  .page-end{
+    position:absolute; left:50%; bottom:26px; transform:translateX(-50%);
+    text-align:center; font-size:12px;
+  }
+  .page-end a{
+    display:block; color:var(--bio-ink); margin-bottom:6px; cursor:pointer;
+  }
+  .page-end .copyright{ color:var(--bio-ink-soft); }
   .bio-text{
     width:40%; max-width:40%;
     font-size:1.05rem; line-height:1.6;
@@ -191,7 +192,7 @@
     .works-section{ padding:32px 18px 120px; }
     .index-header{ display:none; }
     .index-row{ grid-template-columns:1fr 1fr; gap:8px; }
-    .index-row .col-type{ display:none; }
+    .index-row .col-type, .index-row .col-desc{ display:none; }
     .bio-section{ padding:60px 22px 100px; }
     .bio-text{ width:100%; max-width:100%; }
   }
@@ -200,15 +201,17 @@
 <div class="sticky-nav" id="stickyNav">
   <a href="#" id="stickyNavTitle">Marine Zorea</a>
   <div class="sticky-links">
-    <a href="#">Works</a>
-    <a href="#">About</a>
+    <a href="#works" class="works-link">Works</a>
+    <a href="#about" class="about-link">About</a>
   </div>
 </div>
 
 <div class="hero-section" id="heroSection">
   <a href="#" class="nav-title" id="triNavTitle">Marine Zorea</a>
-  <a href="#" class="nav-corner left">Works</a>
-  <a href="#" class="nav-corner right">About</a>
+  <a href="#works" class="nav-corner left works-link">Works</a>
+  <a href="#about" class="nav-corner right about-link">About</a>
+
+  <a href="#works" class="hero-bottom-hint" id="heroBottomHint"></a>
 
   <div class="porthole-assembly" id="porthole">
     <div class="bezel-ring"></div>
@@ -226,87 +229,101 @@
   <div class="index-container">
     <div class="index-header">
       <div>Project</div>
+      <div></div>
       <div>Year</div>
       <div>Type</div>
     </div>
 
-    <div class="works-layout">
-      <div class="index-rows">
-        <a href="project.html" class="index-row" data-img="https://marinezo.com/img/project_formsofquery/1.png">
-          <div>The Age of Query</div>
-          <div>2025</div>
-          <div class="col-type">Education, Exhibition</div>
-        </a>
+    <div class="index-rows">
+      <a href="project.html" class="index-row">
+        <div>The Age of Query</div>
+        <div class="col-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
+        <div>2025</div>
+        <div class="col-type">Education, Exhibition</div>
+      </a>
 
-        <a href="project.html" class="index-row" data-img="https://marinezo.com/img/project_allisheard/1.png">
-          <div>Re-imagining The Sounds of Home</div>
-          <div>2024</div>
-          <div class="col-type">Research, Object</div>
-        </a>
+      <a href="project.html" class="index-row">
+        <div>Re-imagining The Sounds of Home</div>
+        <div class="col-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
+        <div>2024</div>
+        <div class="col-type">Research, Object</div>
+      </a>
 
-        <a href="project.html" class="index-row" data-img="https://marinezo.com/img/project_livingsounds/4.JPG">
-          <div>Empathic Directions for Parental Tech</div>
-          <div>2024</div>
-          <div class="col-type">Research</div>
-        </a>
+      <a href="project.html" class="index-row">
+        <div>Empathic Directions for Parental Tech</div>
+        <div class="col-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
+        <div>2024</div>
+        <div class="col-type">Research</div>
+      </a>
 
-        <a href="project.html" class="index-row" data-img="https://marinezo.com/img/project_thoughtfulobject/6.gif">
-          <div>Thoughtful Object</div>
-          <div>2023-</div>
-          <div class="col-type">Education, Research</div>
-        </a>
+      <a href="project.html" class="index-row">
+        <div>Thoughtful Object</div>
+        <div class="col-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
+        <div>2023-</div>
+        <div class="col-type">Education, Research</div>
+      </a>
 
-        <a href="project.html" class="index-row" data-img="https://marinezo.com/img/project_speakingofcollectivedining/1.gif">
-          <div>Speaking of Collective Dining</div>
-          <div>2023</div>
-          <div class="col-type">Research</div>
-        </a>
+      <a href="project.html" class="index-row">
+        <div>Speaking of Collective Dining</div>
+        <div class="col-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
+        <div>2023</div>
+        <div class="col-type">Research</div>
+      </a>
 
-        <a href="project.html" class="index-row" data-img="https://marinezo.com/img/home/thumb_audible.gif">
-          <div>Audible Imagery</div>
-          <div>2021, 2023</div>
-          <div class="col-type">Research, Exhibition</div>
-        </a>
+      <a href="project.html" class="index-row">
+        <div>Audible Imagery</div>
+        <div class="col-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
+        <div>2021, 2023</div>
+        <div class="col-type">Research, Exhibition</div>
+      </a>
 
-        <a href="project.html" class="index-row" data-img="https://marinezo.com/img/project_chanelspaces/3.jpg">
-          <div>CHANEL Spaces of Transformation</div>
-          <div>2019</div>
-          <div class="col-type">Space Design, Exhibition</div>
-        </a>
+      <a href="project.html" class="index-row">
+        <div>CHANEL Spaces of Transformation</div>
+        <div class="col-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
+        <div>2019</div>
+        <div class="col-type">Space Design, Exhibition</div>
+      </a>
 
-        <a href="project.html" class="index-row" data-img="https://marinezo.com/img/project_livingsounds/4.JPG">
-          <div>Living Sounds</div>
-          <div>2019</div>
-          <div class="col-type">Object</div>
-        </a>
+      <a href="project.html" class="index-row">
+        <div>Living Sounds</div>
+        <div class="col-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
+        <div>2019</div>
+        <div class="col-type">Object</div>
+      </a>
 
-        <a href="project.html" class="index-row" data-img="https://marinezo.com/img/project_anatomo/4.gif">
-          <div>ANA tomo</div>
-          <div>2018</div>
-          <div class="col-type">Object</div>
-        </a>
+      <a href="project.html" class="index-row">
+        <div>ANA tomo</div>
+        <div class="col-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
+        <div>2018</div>
+        <div class="col-type">Object</div>
+      </a>
 
-        <a href="project.html" class="index-row" data-img="https://marinezo.com/img/project_wavesbeyond/7.jpeg">
-          <div>The Waves Beyond</div>
-          <div>2017</div>
-          <div class="col-type">Object, Exhibition</div>
-        </a>
-      </div>
-
-      <div class="index-image-panel" id="indexImagePanel">
-        <img id="indexPanelImg" src="https://marinezo.com/img/project_formsofquery/1.png" alt="">
-      </div>
+      <a href="project.html" class="index-row">
+        <div>The Waves Beyond</div>
+        <div class="col-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
+        <div>2017</div>
+        <div class="col-type">Object, Exhibition</div>
+      </a>
     </div>
   </div>
 </section>
 
-<section class="bio-section">
+<section class="bio-section" id="about">
   <p class="bio-text" id="bio">
     Marine Zorea is a designer and researcher exploring the emergent and critical realities of everyday technology. Guided by philosophy of technology and participatory design, she examines the mutual becomings of humans, machines, and beyond through objects, sound, images, and words. Marine received her BA in Psychology from Tel Aviv Uni. and an MSc and PhD from <a href="https://www.d-lab.kit.ac.jp/" target="_blank" rel="noopener">Kyoto Design Lab</a>, where she examined domestic devices and their ethical articulations in a post-human era. She has collaborated with Japanese tech leaders, presented her work internationally, and published her research in <a href="https://dl.acm.org/doi/10.1145/3643834.3660686" target="_blank" rel="noopener">top HCI publications</a>. Currently, she leads the Masters diploma project in interaction design at <a href="https://www.bezalel.ac.il/en/node/646242" target="_blank" rel="noopener">Bezalel Academy of Art and Design</a>.
   </p>
+
+  <div class="page-end">
+    <a href="#" id="scrollTopLink">↑</a>
+    <div class="copyright">©2026 Marine Zorea</div>
+  </div>
 </section>
 
 <script>
+function smoothScrollTo(id){
+  var el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
+}
 (function(){
   var IMAGES = [
     { src: "https://marinezo.com/img/home/fisheye/1.png", name: "Tanikawa Shuntaro's Radio Waves Beyond", year: "2017", type: "Object" },
@@ -489,15 +506,16 @@
   setCaption(0);
 
   function setCaptionFaded(idx){
-    // don't touch the DOM text at all while the bio blurb is showing - curIdx
-    // (tracked elsewhere) is what setCaption(curIdx) reads once hideBio() runs
-    if (bioActive) return;
+    // don't touch the DOM text at all while the bio blurb or the down-arrow
+    // hint is showing - curIdx (tracked elsewhere) is what setCaption(curIdx)
+    // reads once hideBio() runs
+    if (bioActive || hintHovering) return;
     hoverCaptionText.style.opacity = 0;
     setTimeout(function(){
-      // bioActive can flip true while this timeout is pending (the bio hover
-      // fired mid-fade) - re-check here or the stale image caption clobbers
-      // the bio blurb a moment after it appears.
-      if (bioActive) return;
+      // bioActive/hintHovering can flip true while this timeout is pending -
+      // re-check here or the stale image caption clobbers whatever's now
+      // showing a moment after it appears.
+      if (bioActive || hintHovering) return;
       setCaption(idx);
       hoverCaptionText.style.opacity = 1;
     }, 125);
@@ -513,6 +531,29 @@
   lens.addEventListener('pointerleave', function(){
     lensHovering = false;
     if (!bioActive) hoverCaption.classList.remove('visible');
+  });
+
+  // bottom-of-hero hint: hovering the empty margin below the porthole (at
+  // the top of the page) shows a down-arrow that scrolls to the index.
+  var heroBottomHint = document.getElementById('heroBottomHint');
+  var hintHovering = false;
+  heroBottomHint.addEventListener('pointerenter', function(){
+    hintHovering = true;
+    if (!bioActive) {
+      hoverCaptionText.textContent = '↓';
+      hoverCaption.classList.add('visible');
+    }
+  });
+  heroBottomHint.addEventListener('pointerleave', function(){
+    hintHovering = false;
+    if (!bioActive) {
+      if (lensHovering) setCaption(curIdx);
+      else hoverCaption.classList.remove('visible');
+    }
+  });
+  heroBottomHint.addEventListener('click', function(e){
+    e.preventDefault();
+    smoothScrollTo('works');
   });
 
   function showBio(){
@@ -606,6 +647,15 @@
   var smoothTop = function(e){ e.preventDefault(); window.scrollTo({top:0, behavior:'smooth'}); };
   document.getElementById('triNavTitle').addEventListener('click', smoothTop);
   document.getElementById('stickyNavTitle').addEventListener('click', smoothTop);
+  var scrollTopLink = document.getElementById('scrollTopLink');
+  if (scrollTopLink) scrollTopLink.addEventListener('click', smoothTop);
+
+  document.querySelectorAll('.works-link').forEach(function(el){
+    el.addEventListener('click', function(e){ e.preventDefault(); smoothScrollTo('works'); });
+  });
+  document.querySelectorAll('.about-link').forEach(function(el){
+    el.addEventListener('click', function(e){ e.preventDefault(); smoothScrollTo('about'); });
+  });
 
   // the triangular hero nav fades out once scrolled 7/10 of the fisheye's
   // own diameter, then the sticky bar fades in at 4/5 - leaving a gap so
@@ -636,30 +686,6 @@
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll);
   updateNav();
-})();
-
-/* ===========================================
-   INDEX IMAGE PANEL — fixed panel to the right of the grid,
-   crossfades to match whichever project row is hovered
-   =========================================== */
-(function(){
-  var panelImg = document.getElementById('indexPanelImg');
-  var rows = document.querySelectorAll('.index-row');
-  var currentSrc = panelImg.getAttribute('src');
-
-  rows.forEach(function(row){
-    row.addEventListener('mouseenter', function(){
-      var src = row.getAttribute('data-img');
-      if (src && src !== currentSrc) {
-        currentSrc = src;
-        panelImg.style.opacity = 0;
-        setTimeout(function(){
-          panelImg.src = src;
-          panelImg.style.opacity = 1;
-        }, 150);
-      }
-    });
-  });
 })();
 
 /* ===========================================
