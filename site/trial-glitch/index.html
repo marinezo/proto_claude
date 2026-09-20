@@ -138,12 +138,27 @@
     color:var(--ink-soft);
   }
   .index-row{
+    position:relative;
     text-decoration:none;
     color:inherit;
+    margin-bottom:10px; /* <- gap between project rows (title+year+type as a group) */
   }
   .index-row .col-type{
     color:var(--ink-soft);
   }
+  .index-row:hover > div:not(.col-hover-desc){
+    text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:3px;
+  }
+  /* hover-only description: lines up with the Project/Year row (top:0),
+     starts at the 3rd quarter of the viewport regardless of the index's
+     own (much narrower) column width. */
+  .index-row .col-hover-desc{
+    position:absolute; left:50vw; top:0; width:25vw;
+    font-size:12px;
+    opacity:0;
+    transition:opacity .3s ease;
+  }
+  .index-row:hover .col-hover-desc{ opacity:1; }
 
   /* --- bio (bottom) --- */
   .bio-section{
@@ -163,7 +178,7 @@
   }
   .page-end .copyright{ color:var(--bio-ink-soft); }
   .bio-text{
-    width:100%; max-width:100%;
+    width:50vw; max-width:50vw;
     font-size:1.05rem; line-height:1.6;
     text-align:left;
     opacity:0; transform:translateY(24px);
@@ -177,6 +192,17 @@
   }
   .bio-text a:hover{ border-color:var(--bio-ink); }
 
+  /* 4th-quarter links, level with the top of the bio text */
+  .bio-links{
+    position:absolute; left:75vw; top:120px; right:5px;
+  }
+  .bio-links a{
+    display:block; color:var(--bio-ink); margin-bottom:10px;
+  }
+  .bio-links a:hover{
+    text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:3px;
+  }
+
   @media (max-width:600px){
     .nav-corner, .nav-title{ font-size:.85rem; }
     .porthole-assembly{ width:min(82vw, 68vh); }
@@ -186,6 +212,8 @@
     .index-container{ width:100%; }
     .bio-section{ padding:60px 5px 100px 2px; margin-top:32px; }
     .bio-text{ width:100%; max-width:100%; }
+    .bio-links{ position:static; margin-top:32px; }
+    .index-row .col-hover-desc{ display:none; }
   }
 </style>
 
@@ -228,60 +256,70 @@
         <div>The Age of Query</div>
         <div>2025</div>
         <div class="col-type">Education, Exhibition</div>
+        <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
       </a>
 
       <a href="project.html" class="index-row">
         <div>Re-imagining The Sounds of Home</div>
         <div>2024</div>
         <div class="col-type">Research, Object</div>
+        <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
       </a>
 
       <a href="project.html" class="index-row">
         <div>Empathic Directions for Parental Tech</div>
         <div>2024</div>
         <div class="col-type">Research</div>
+        <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
       </a>
 
       <a href="project.html" class="index-row">
         <div>Thoughtful Object</div>
         <div>2023-</div>
         <div class="col-type">Education, Research</div>
+        <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
       </a>
 
       <a href="project.html" class="index-row">
         <div>Speaking of Collective Dining</div>
         <div>2023</div>
         <div class="col-type">Research</div>
+        <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
       </a>
 
       <a href="project.html" class="index-row">
         <div>Audible Imagery</div>
         <div>2021, 2023</div>
         <div class="col-type">Research, Exhibition</div>
+        <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
       </a>
 
       <a href="project.html" class="index-row">
         <div>CHANEL Spaces of Transformation</div>
         <div>2019</div>
         <div class="col-type">Space Design, Exhibition</div>
+        <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
       </a>
 
       <a href="project.html" class="index-row">
         <div>Living Sounds</div>
         <div>2019</div>
         <div class="col-type">Object</div>
+        <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
       </a>
 
       <a href="project.html" class="index-row">
         <div>ANA tomo</div>
         <div>2018</div>
         <div class="col-type">Object</div>
+        <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
       </a>
 
       <a href="project.html" class="index-row">
         <div>The Waves Beyond</div>
         <div>2017</div>
         <div class="col-type">Object, Exhibition</div>
+        <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
       </a>
     </div>
   </div>
@@ -291,6 +329,11 @@
   <p class="bio-text" id="bio">
     Marine Zorea is a designer and researcher exploring the emergent and critical realities of everyday technology. Guided by philosophy of technology and participatory design, she examines the mutual becomings of humans, machines, and beyond through objects, sound, images, and words. Marine received her BA in Psychology from Tel Aviv Uni. and an MSc and PhD from <a href="https://www.d-lab.kit.ac.jp/" target="_blank" rel="noopener">Kyoto Design Lab</a>, where she examined domestic devices and their ethical articulations in a post-human era. She has collaborated with Japanese tech leaders, presented her work internationally, and published her research in <a href="https://dl.acm.org/doi/10.1145/3643834.3660686" target="_blank" rel="noopener">top HCI publications</a>. Currently, she leads the Masters diploma project in interaction design at <a href="https://www.bezalel.ac.il/en/node/646242" target="_blank" rel="noopener">Bezalel Academy of Art and Design</a>.
   </p>
+
+  <div class="bio-links">
+    <a href="#">Contact</a>
+    <a href="#">Publications</a>
+  </div>
 
   <div class="page-end">
     <a href="#" id="scrollTopLink">&#8593;</a>
