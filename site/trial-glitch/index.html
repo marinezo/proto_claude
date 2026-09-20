@@ -26,12 +26,12 @@
   /* --- triangular hero nav: NOT sticky, lives inside the hero and scrolls
      away with it naturally --- */
   .nav-title{
-    position:absolute; top:26px; left:50%; transform:translateX(-50%);
+    position:absolute; top:5px; left:50%; transform:translateX(-50%);
     font-size:1.2rem; letter-spacing:.02em; white-space:nowrap; z-index:5;
     transition:opacity .25s ease;
   }
   .nav-corner{
-    position:absolute; bottom:26px;
+    position:absolute; bottom:5px;
     font-size:1.2rem; z-index:5; line-height:1.3;
     transition:opacity .25s ease;
   }
@@ -49,7 +49,7 @@
   .sticky-nav{
     position:fixed; top:0; left:0; right:0; z-index:50;
     display:flex; align-items:center; justify-content:space-between;
-    padding:calc(env(safe-area-inset-top,0px) + 18px) 2px 18px;
+    padding:calc(env(safe-area-inset-top,0px) + 5px) 2px 20px;
     font-size:1.2rem;
     background:linear-gradient(to bottom, rgba(244,244,244,.96), rgba(244,244,244,.85) 70%, rgba(244,244,244,0));
     opacity:0; transform:translateY(-8px); pointer-events:none;
@@ -62,16 +62,17 @@
   }
   .sticky-nav .sticky-links{ display:flex; gap:28px; }
 
-  /* --- bottom-center caption: rail caption on porthole hover, bio blurb on
-     "Marine Zorea" hover; aligned with the lower line of the corner nav --- */
+  /* --- bottom-center caption: shows the bio blurb by default, swaps to the
+     hovered project's caption while hovering the porthole, and hides
+     entirely once the sticky nav takes over (they never show together). --- */
   .hover-caption{
-    position:absolute; left:50%; bottom:26px;
+    position:absolute; left:50%; bottom:5px;
     transform:translateX(-50%);
-    font-family:"neue-haas-grotesk-display", Arial, Helvetica, sans-serif; font-size:12px; line-height:1.3;
+    font-family:"neue-haas-grotesk-display", Arial, Helvetica, sans-serif; font-size:1.2rem; line-height:1.3;
     color:var(--ink); white-space:nowrap; z-index:40; pointer-events:none;
-    opacity:0; transition:opacity .3s ease;
+    opacity:1; transition:opacity .3s ease;
   }
-  .hover-caption.visible{ opacity:1; }
+  .hover-caption.hidden-by-scroll{ opacity:0; }
   #hoverCaptionText{ display:inline-block; transition:opacity .125s ease; }
 
   @media (max-width:600px){
@@ -127,34 +128,39 @@
   /* uniform font size across header, rows and the type subline; two columns
      (Project/Year) - a third child in each row auto-wraps to a new grid row
      still starting at column 1, which is what puts the type line directly
-     under the project title with no dedicated column for it. */
+     under the project title with no dedicated column for it. column-gap is
+     the minimal padding that keeps long project titles from running into
+     the Year column. */
   .index-header, .index-row{
     display:grid;
     grid-template-columns:4fr 1fr;
+    column-gap:16px;
     font-size:1.2rem;
   }
   .index-header{
     text-transform:uppercase;
     letter-spacing:.04em;
-    padding-bottom:30px;
+    padding-bottom:40px;
   }
   .index-row{
     position:relative;
     text-decoration:none;
     color:inherit;
-    margin-bottom:10px; /* <- gap between project rows (title+year+type as a group) */
+    margin-bottom:7px; /* <- gap between project rows (title+year+type as a group) */
   }
-  .index-row .col-type{
+  .index-row .col-type{font-weight:; text-decoration: ;
   }
-  .index-row:hover > div:not(.col-hover-desc){
+
+  /* only the project title underlines on hover - year/type stay as-is */
+  .index-row:hover > div:first-child{
     text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:3px;
   }
   /* hover-only description: lines up with the Project/Year row (top:0),
      starts at the 3rd quarter of the viewport regardless of the index's
      own (much narrower) column width. */
   .index-row .col-hover-desc{
-    position:absolute; left:50vw; top:0; width:25vw;
-    font-size:12px;
+    position:absolute; left:33vw; top:0; width:45vw;
+    font-size:1.2rem;
     opacity:0;
     transition:opacity .3s ease;
   }
@@ -164,19 +170,19 @@
   .bio-section{
     position:relative;
     width:100%;
-    padding:0px 5px 120px 2px;
+    padding:80px 5px 80px 2px;
     margin-top:0px;
   }
   .page-end{
-    position:absolute; left:50%; bottom:26px; transform:translateX(-50%);
-    text-align:center; font-size:12px;
+    position:absolute; left:50%; bottom:5px; transform:translateX(-50%);
+    text-align:center; font-size:1.2rem;
   }
   .page-end a{
     display:block; margin-bottom:6px; cursor:pointer;
   }
-  .page-end .copyright{ color:var(--ink-soft); }
+  .page-end .copyright{ }
   .bio-text{
-    width:50vw; max-width:50vw;
+    width:100vw; max-width:100vw;
     font-size:1.2rem; line-height:1.3;
     text-align:left;
     opacity:0; transform:translateY(24px);
@@ -184,20 +190,23 @@
   }
   .bio-text.visible{ opacity:1; transform:translateY(0); }
   .bio-text a{
-    border-bottom:1px solid var(--ink-faint);
     transition:border-color .2s ease;
   }
-  .bio-text a:hover{ text-decoration:underline; }
+  .bio-text a:hover{
+    text-decoration:underline; text-underline-offset:3px;
+  }
 
-  /* 4th-quarter links, level with the top of the bio text */
+  /* Contact/Publications now sit right under the bio paragraph, in normal
+     flow - no longer absolutely positioned (that was overlapping the text). */
   .bio-links{
-    position:absolute; left:75vw; top:0; right:5px;
+    margin-top:24px;
+    font-size:1.2rem;
   }
   .bio-links a{
-    display:block; margin-bottom:10px;
+    display:block; margin-bottom:5px;
   }
   .bio-links a:hover{
-    text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:3px;
+    text-decoration:underline; text-underline-offset:3px;
   }
 
   @media (max-width:600px){
@@ -209,7 +218,6 @@
     .index-container{ width:100%; }
     .bio-section{ padding:60px 5px 100px 2px; margin-top:32px; }
     .bio-text{ width:100%; max-width:100%; }
-    .bio-links{ position:static; margin-top:32px; }
     .index-row .col-hover-desc{ display:none; }
   }
 </style>
@@ -250,70 +258,77 @@
 
     <div class="index-rows">
       <a href="project.html" class="index-row">
-        <div>The Age of Query</div>
+        <div>The Age of Query (part of Newborn Festival)</div>
         <div>2025</div>
-        <div class="col-type">Education, Exhibition</div>
+        <div class="col-type">Education, Curation</div>
         <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
       </a>
 
       <a href="project.html" class="index-row">
-        <div>Re-imagining The Sounds of Home</div>
+        <div>Reimagining The Sounds of Home through the Lens of Care</div>
         <div>2024</div>
-        <div class="col-type">Research, Object</div>
+        <div class="col-type">Object, Design Research</div>
         <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
       </a>
 
       <a href="project.html" class="index-row">
-        <div>Empathic Directions for Parental Tech</div>
+        <div>Empathic Directions for the Sounds of Parental Technologies</div>
         <div>2024</div>
-        <div class="col-type">Research</div>
+        <div class="col-type">Design Research</div>
         <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
       </a>
 
       <a href="project.html" class="index-row">
         <div>Thoughtful Object</div>
         <div>2023-</div>
-        <div class="col-type">Education, Research</div>
+        <div class="col-type">Object, Education, Design Research</div>
         <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
       </a>
 
       <a href="project.html" class="index-row">
         <div>Speaking of Collective Dining</div>
         <div>2023</div>
-        <div class="col-type">Research</div>
+        <div class="col-type">Design Research</div>
         <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
       </a>
 
       <a href="project.html" class="index-row">
-        <div>Audible Imagery</div>
-        <div>2021</div>
-        <div class="col-type">Research, Exhibition</div>
+        <div>Audible Imagery: Creative Contemplations on the Sounds of Home</div>
+        <div>2023</div>
+        <div class="col-type">Design Research</div>
         <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
       </a>
 
       <a href="project.html" class="index-row">
-        <div>CHANEL Spaces of Transformation</div>
+        <div>All Is Heard Participatory Show (part of Tel Aviv Illustration Week)</div>
+        <div>2023</div>
+        <div class="col-type">Curation, Space, Design Research</div>
+        <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
+      </a>
+
+      <a href="project.html" class="index-row">
+        <div>CHANEL Spaces of Transformation (with CHANEL Japan)</div>
         <div>2019</div>
-        <div class="col-type">Space Design, Exhibition</div>
+        <div class="col-type">Space, Design Research</div>
         <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
       </a>
 
       <a href="project.html" class="index-row">
-        <div>Living Sounds</div>
+        <div>Living Sounds: Sound Interactions for Elders' Domestic Technology</div>
         <div>2019</div>
         <div class="col-type">Object</div>
         <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
       </a>
 
       <a href="project.html" class="index-row">
-        <div>ANA tomo</div>
+        <div>ANA tomo (with All Nippon Airways)</div>
         <div>2018</div>
         <div class="col-type">Object</div>
         <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
       </a>
 
       <a href="project.html" class="index-row">
-        <div>The Waves Beyond</div>
+        <div>Tanikawa Shuntaro's Radio The Waves Beyond</div>
         <div>2017</div>
         <div class="col-type">Object, Exhibition</div>
         <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
@@ -346,16 +361,12 @@ function smoothScrollTo(id){
 (function(){
   var IMAGES = [
     { src: "https://marinezo.com/img/home/fisheye/1.png", name: "Tanikawa Shuntaro's Radio Waves Beyond", year: "2017", type: "Object" },
-    { src: "https://marinezo.com/img/home/fisheye/2.png", name: "CHANEL Spaces of Transformation", year: "2019", type: "Space - Design Research" },
     { src: "https://marinezo.com/img/home/fisheye/3.png", name: "Zen Garden Kaleidoscope Kit", year: "2017", type: "Object - Design Research" },
-    { src: "https://marinezo.com/img/home/fisheye/4.png", name: "Thoughtful Object Workshop 2", year: "2025", type: "Education - Design Research - Object" },
-    { src: "https://marinezo.com/img/home/fisheye/5.png", name: "5", year: "2025", type: "Education - Design Research - Object" },
-    { src: "https://marinezo.com/img/home/fisheye/6.png", name: "6", year: "2025", type: "Education - Design Research - Object" },
-    { src: "https://marinezo.com/img/home/fisheye/7.png", name: "7", year: "2025", type: "Education - Design Research - Object" },
-    { src: "https://marinezo.com/img/home/fisheye/8.png", name: "8", year: "2025", type: "Education - Design Research - Object" }
+    { src: "https://marinezo.com/img/home/fisheye/2.png", name: "CHANEL Spaces of Transformation", year: "2019", type: "Space - Design Research" },
+    { src: "https://marinezo.com/img/home/fisheye/9.png", name: "Thoughtful Object Workshop 2", year: "2025", type: "Education - Design Research - Object" },
   ];
 
-  var zoomLevels = [1.9, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5];
+  var zoomLevels = [1.9, 1.5, 1.5, 1.8];
   var rippleAmount = 0.014;
   var warpStrength = 0.60;
   var warpBoost = 0;
@@ -512,7 +523,6 @@ function smoothScrollTo(id){
   var hoverCaptionText = document.getElementById('hoverCaptionText');
   var BIO_BLURB = "Marine Zorea is a creative and scholar exploring the emergent and critical realities of everyday objects.";
   var lensHovering = false;
-  var bioActive = false;
 
   function captionFor(idx){
     var item = IMAGES[idx];
@@ -522,19 +532,21 @@ function smoothScrollTo(id){
   function setCaption(idx){
     hoverCaptionText.textContent = captionFor(idx);
   }
-  setCaption(0);
+  function setDefaultCaption(){
+    hoverCaptionText.textContent = BIO_BLURB;
+  }
+  setDefaultCaption();
 
   function setCaptionFaded(idx){
-    // don't touch the DOM text at all while the bio blurb or the down-arrow
-    // hint is showing - curIdx (tracked elsewhere) is what setCaption(curIdx)
-    // reads once hideBio() runs
-    if (bioActive || hintHovering) return;
+    // the auto-rotation only needs to touch the DOM text while the lens is
+    // actually being hovered (otherwise the default bio blurb is showing,
+    // and the down-arrow hint takes priority over both while active) -
+    // curIdx/nextIdx keep advancing in the background regardless, so the
+    // next hover always reflects the current image.
+    if (!lensHovering || hintHovering) return;
     hoverCaptionText.style.opacity = 0;
     setTimeout(function(){
-      // bioActive/hintHovering can flip true while this timeout is pending -
-      // re-check here or the stale image caption clobbers whatever's now
-      // showing a moment after it appears.
-      if (bioActive || hintHovering) return;
+      if (!lensHovering || hintHovering) return;
       setCaption(idx);
       hoverCaptionText.style.opacity = 1;
     }, 125);
@@ -542,14 +554,11 @@ function smoothScrollTo(id){
 
   lens.addEventListener('pointerenter', function(){
     lensHovering = true;
-    if (!bioActive) {
-      setCaption(curIdx);
-      hoverCaption.classList.add('visible');
-    }
+    if (!hintHovering) setCaption(curIdx);
   });
   lens.addEventListener('pointerleave', function(){
     lensHovering = false;
-    if (!bioActive) hoverCaption.classList.remove('visible');
+    if (!hintHovering) setDefaultCaption();
   });
 
   // bottom-of-hero hint: hovering the empty margin below the porthole (at
@@ -558,56 +567,17 @@ function smoothScrollTo(id){
   var hintHovering = false;
   heroBottomHint.addEventListener('pointerenter', function(){
     hintHovering = true;
-    if (!bioActive) {
-      hoverCaptionText.textContent = String.fromCharCode(8595); // down arrow
-      hoverCaption.classList.add('visible');
-    }
+    hoverCaptionText.textContent = String.fromCharCode(8595); // down arrow
   });
   heroBottomHint.addEventListener('pointerleave', function(){
     hintHovering = false;
-    if (!bioActive) {
-      if (lensHovering) setCaption(curIdx);
-      else hoverCaption.classList.remove('visible');
-    }
+    if (lensHovering) setCaption(curIdx);
+    else setDefaultCaption();
   });
   heroBottomHint.addEventListener('click', function(e){
     e.preventDefault();
     smoothScrollTo('works');
   });
-
-  function showBio(){
-    bioActive = true;
-    hoverCaptionText.style.opacity = 1;
-    hoverCaptionText.textContent = BIO_BLURB;
-    hoverCaption.classList.add('visible');
-  }
-  function hideBio(){
-    bioActive = false;
-    if (lensHovering) {
-      setCaption(curIdx);
-    } else {
-      hoverCaption.classList.remove('visible');
-    }
-  }
-  // the caption lives inside the hero and scrolls away with it, so the bio
-  // hover only makes sense on the triangular title (the sticky nav's title
-  // stays on screen long after the caption itself has scrolled out of view).
-  var triNavTitle = document.getElementById('triNavTitle');
-  triNavTitle.addEventListener('pointerenter', showBio);
-  triNavTitle.addEventListener('pointerleave', hideBio);
-  // safety net: if the title fades out / goes pointer-events:none under a
-  // *stationary* cursor (scrolling with the wheel without moving the mouse),
-  // no pointerleave fires and bioActive gets stuck true forever, freezing
-  // the caption on the bio blurb. A pointermove watchdog self-heals it by
-  // checking what's actually under the cursor whenever it does move.
-  window.exitBioIfStray = function(){
-    if (bioActive) hideBio();
-  };
-  document.addEventListener('pointermove', function(e){
-    if (!bioActive) return;
-    var target = document.elementFromPoint(e.clientX, e.clientY);
-    if (target !== triNavTitle) hideBio();
-  }, { passive: true });
 
   function frame(now){
     var t = (now - startTime) / 1000;
@@ -662,6 +632,7 @@ function smoothScrollTo(id){
 (function(){
   var porthole = document.getElementById('porthole');
   var stickyNav = document.getElementById('stickyNav');
+  var hoverCaption = document.getElementById('hoverCaption');
 
   var smoothTop = function(e){ e.preventDefault(); window.scrollTo({top:0, behavior:'smooth'}); };
   document.getElementById('triNavTitle').addEventListener('click', smoothTop);
@@ -678,9 +649,9 @@ function smoothScrollTo(id){
 
   // the triangular hero nav fades out once scrolled 7/10 of the fisheye's
   // own diameter, then the sticky bar fades in at 4/5 - leaving a gap so
-  // the two are never visible at the same time.
+  // the two are never visible at the same time. the bottom caption hides
+  // in lockstep with the sticky bar showing, so the two never overlap either.
   var ticking = false;
-  var triWasVisible = true;
   function updateNav(){
     ticking = false;
     var portholeHeight = porthole.getBoundingClientRect().height;
@@ -689,12 +660,7 @@ function smoothScrollTo(id){
     var showSticky = scrolled >= portholeHeight * 0.8;
     document.body.classList.toggle('hero-nav-hidden', hideTri);
     stickyNav.classList.toggle('visible', showSticky);
-    // the triangular title can go pointer-events:none out from under a
-    // stationary cursor with no pointerleave firing - if it just
-    // disappeared, force-clear any bio-hover state stuck on because of that.
-    var triNowVisible = !hideTri;
-    if (triWasVisible && !triNowVisible && window.exitBioIfStray) window.exitBioIfStray();
-    triWasVisible = triNowVisible;
+    hoverCaption.classList.toggle('hidden-by-scroll', showSticky);
   }
   function onScroll(){
     if (!ticking) {
