@@ -1,4 +1,5 @@
 <meta charset="UTF-8">
+<link rel="stylesheet" href="https://use.typekit.net/rhs8xno.css">
 <title>Marine Zorea</title>
 <style>
   :root{
@@ -17,7 +18,7 @@
     margin:0;
     background:var(--paper);
     color:var(--ink);
-    font-family:'Times New Roman', Times, serif;
+    font-family:"neue-haas-grotesk-display", sans-serif;
     overflow-x:hidden;
   }
   a{ color:inherit; text-decoration:none; }
@@ -34,8 +35,8 @@
     font-size:1.2rem; z-index:5; line-height:1.3;
     transition:opacity .25s ease;
   }
-  .nav-corner.left{ left:26px; }
-  .nav-corner.right{ right:26px; text-align:right; }
+  .nav-corner.left{ left:2px; }
+  .nav-corner.right{ right:2px; text-align:right; }
   .nav-title, .nav-corner{ color:var(--ink); text-decoration:none; }
   .nav-corner:hover{
     text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:3px;
@@ -49,7 +50,7 @@
     position:fixed; top:0; left:0; right:0; z-index:50;
     display:flex; align-items:center; justify-content:space-between;
     padding:calc(env(safe-area-inset-top,0px) + 18px) 2px 18px;
-    font-size:1.1rem;
+    font-size:1.2rem;
     background:linear-gradient(to bottom, rgba(244,244,244,.96), rgba(244,244,244,.85) 70%, rgba(244,244,244,0));
     opacity:0; transform:translateY(-8px); pointer-events:none;
     transition:opacity .35s ease, transform .35s ease;
@@ -66,7 +67,7 @@
   .hover-caption{
     position:absolute; left:50%; bottom:26px;
     transform:translateX(-50%);
-    font-family:"neue-haas-grotesk-display", Arial, Helvetica, sans-serif; font-size:14px; line-height:1.3;
+    font-family:"neue-haas-grotesk-display", Arial, Helvetica, sans-serif; font-size:12px; line-height:1.3;
     color:var(--ink); white-space:nowrap; z-index:40; pointer-events:none;
     opacity:0; transition:opacity .3s ease;
   }
@@ -121,7 +122,7 @@
     padding:140px 2px 40px;
   }
   .index-container{
-    width:25vw;
+    width:30vw;
   }
   /* uniform font size across header, rows and the type subline; two columns
      (Project/Year) - a third child in each row auto-wraps to a new grid row
@@ -130,12 +131,12 @@
   .index-header, .index-row{
     display:grid;
     grid-template-columns:4fr 1fr;
-    font-size:13px;
+    font-size:1.2rem;
   }
   .index-header{
     text-transform:uppercase;
     letter-spacing:.04em;
-    color:var(--ink-soft);
+    padding-bottom:30px;
   }
   .index-row{
     position:relative;
@@ -144,7 +145,6 @@
     margin-bottom:10px; /* <- gap between project rows (title+year+type as a group) */
   }
   .index-row .col-type{
-    color:var(--ink-soft);
   }
   .index-row:hover > div:not(.col-hover-desc){
     text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:3px;
@@ -164,40 +164,37 @@
   .bio-section{
     position:relative;
     width:100%;
-    background:var(--bio-bg);
-    color:var(--bio-ink);
-    padding:120px 5px 120px 2px;
-    margin-top:60px;
+    padding:0px 5px 120px 2px;
+    margin-top:0px;
   }
   .page-end{
     position:absolute; left:50%; bottom:26px; transform:translateX(-50%);
     text-align:center; font-size:12px;
   }
   .page-end a{
-    display:block; color:var(--bio-ink); margin-bottom:6px; cursor:pointer;
+    display:block; margin-bottom:6px; cursor:pointer;
   }
-  .page-end .copyright{ color:var(--bio-ink-soft); }
+  .page-end .copyright{ color:var(--ink-soft); }
   .bio-text{
     width:50vw; max-width:50vw;
-    font-size:1.05rem; line-height:1.6;
+    font-size:1.2rem; line-height:1.3;
     text-align:left;
     opacity:0; transform:translateY(24px);
     transition:opacity 1s ease, transform 1s cubic-bezier(.16,1,.3,1);
   }
   .bio-text.visible{ opacity:1; transform:translateY(0); }
   .bio-text a{
-    color:var(--bio-ink);
-    border-bottom:1px solid var(--bio-ink-soft);
+    border-bottom:1px solid var(--ink-faint);
     transition:border-color .2s ease;
   }
-  .bio-text a:hover{ border-color:var(--bio-ink); }
+  .bio-text a:hover{ text-decoration:underline; }
 
   /* 4th-quarter links, level with the top of the bio text */
   .bio-links{
-    position:absolute; left:75vw; top:120px; right:5px;
+    position:absolute; left:75vw; top:0; right:5px;
   }
   .bio-links a{
-    display:block; color:var(--bio-ink); margin-bottom:10px;
+    display:block; margin-bottom:10px;
   }
   .bio-links a:hover{
     text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:3px;
@@ -289,7 +286,7 @@
 
       <a href="project.html" class="index-row">
         <div>Audible Imagery</div>
-        <div>2021, 2023</div>
+        <div>2021</div>
         <div class="col-type">Research, Exhibition</div>
         <div class="col-hover-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
       </a>
