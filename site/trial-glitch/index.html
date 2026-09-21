@@ -660,7 +660,10 @@ function smoothScrollTo(id){
     var showSticky = scrolled >= portholeHeight * 0.8;
     document.body.classList.toggle('hero-nav-hidden', hideTri);
     stickyNav.classList.toggle('visible', showSticky);
-    hoverCaption.classList.toggle('hidden-by-scroll', showSticky);
+    // tied to the same threshold as the triangular nav (not showSticky) so
+    // the caption vanishes together with it, instead of lingering through
+    // the 0.7-0.8 gap that exists to keep the two navs from overlapping.
+    hoverCaption.classList.toggle('hidden-by-scroll', hideTri);
   }
   function onScroll(){
     if (!ticking) {
